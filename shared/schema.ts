@@ -26,36 +26,24 @@ export const insertPhotoSchema = createInsertSchema(photos).pick({
   submitterName: true,
 });
 
-export const transformations = pgTable("transformations", {
+export const displaySettings = pgTable("display_settings", {
   id: serial("id").primaryKey(),
-  photoId: integer("photo_id").notNull(),
-  transformedPath: text("transformed_path").notNull(),
-  promptUsed: text("prompt_used").notNull(),
-  status: text("status").notNull().default("pending"), // pending, approved, rejected
-  stylePreset: text("style_preset").notNull(),
-  createdAt: timestamp("created_at").defaultNow(),
+  backgroundPath: text("background_path"),
+  autoRotate: boolean("auto_rotate").notNull().default(true),
+  slideInterval: integer("slide_interval").notNull().default(8),
+  showInfo: boolean("show_info").notNull().default(true),
+  transitionEffect: text("transition_effect").notNull().default("slide"),
+  blacklistWords: text("blacklist_words"),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-export const insertTransformationSchema = createInsertSchema(transformations).pick({
-  photoId: true,
-  transformedPath: true,
-  promptUsed: true,
-  stylePreset: true,
-});
-
-export const transformationSettings = pgTable("transformation_settings", {
-  id: serial("id").primaryKey(),
-  stylePreset: text("style_preset").notNull(),
-  promptTemplate: text("prompt_template").notNull(),
-  effectIntensity: integer("effect_intensity").notNull().default(7),
-  isDefault: boolean("is_default").notNull().default(false),
-});
-
-export const insertTransformationSettingsSchema = createInsertSchema(transformationSettings).pick({
-  stylePreset: true,
-  promptTemplate: true,
-  effectIntensity: true,
-  isDefault: true,
+export const insertDisplaySettingsSchema = createInsertSchema(displaySettings).pick({
+  backgroundPath: true,
+  autoRotate: true,
+  slideInterval: true,
+  showInfo: true,
+  transitionEffect: true,
+  blacklistWords: true,
 });
 
 // Types
@@ -65,11 +53,8 @@ export type InsertUser = z.infer<typeof insertUserSchema>;
 export type Photo = typeof photos.$inferSelect;
 export type InsertPhoto = z.infer<typeof insertPhotoSchema>;
 
-export type Transformation = typeof transformations.$inferSelect;
-export type InsertTransformation = z.infer<typeof insertTransformationSchema>;
-
-export type TransformationSettings = typeof transformationSettings.$inferSelect;
-export type InsertTransformationSettings = z.infer<typeof insertTransformationSettingsSchema>;
+export type DisplaySettings = typeof displaySettings.$inferSelect;
+export type InsertDisplaySettings = z.infer<typeof insertDisplaySettingsSchema>;
 
 // Additional validation schemas for our application
 export const photoUploadSchema = z.object({
@@ -81,14 +66,11 @@ export const moderationActionSchema = z.object({
   action: z.enum(["approve", "reject"]),
 });
 
-export const transformationActionSchema = z.object({
-  transformationId: z.number(),
-  action: z.enum(["approve", "reject"]),
-});
-
-export const stylePresetSchema = z.object({
-  name: z.string(),
-  promptTemplate: z.string(),
-  effectIntensity: z.number().min(1).max(10).default(7),
-  isDefault: z.boolean().default(false),
+export const displaySettingsSchema = z.object({
+  backgroundPath: z.string().optional(),
+  autoRotate: z.boolean().default(true),
+  slideInterval: z.number().min(1).max(60).default(8),
+  showInfo: z.boolean().default(true),
+  transitionEffect: z.enum(["fade", "slide", "zoom"]).default("slide"),
+  blacklistWords: z.string().optional(),
 });

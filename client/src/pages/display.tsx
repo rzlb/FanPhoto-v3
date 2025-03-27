@@ -6,10 +6,19 @@ import DisplayControls from "@/components/display/DisplayControls";
 interface DisplayImage {
   id: number;
   originalPath: string;
-  transformedPath: string;
-  stylePreset: string;
   submitterName: string;
   createdAt: string;
+}
+
+interface DisplaySettings {
+  id: number;
+  backgroundPath: string | null;
+  autoRotate: boolean;
+  slideInterval: number;
+  showInfo: boolean;
+  transitionEffect: string;
+  blacklistWords: string | null;
+  updatedAt: string;
 }
 
 export default function DisplayPage() {
@@ -18,10 +27,24 @@ export default function DisplayPage() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [interval, setInterval] = useState(8); // seconds
 
-  const { data: images, isLoading, error } = useQuery<DisplayImage[]>({
+  // Fetch display settings
+  const { data: settings, isLoading: isLoadingSettings } = useQuery<DisplaySettings>({
+    queryKey: ["/api/display-settings"],
+  });
+
+  // Fetch images
+  const { data: images, isLoading: isLoadingImages, error } = useQuery<DisplayImage[]>({
     queryKey: ["/api/display/images"],
     refetchInterval: isPaused ? false : interval * 1000, // Refetch based on slideshow interval
   });
+
+  // Update local settings from fetched settings
+  useEffect(() => {
+    if (settings) {
+      setIsPaused(!settings.autoRotate);
+      setInterval(settings.slideInterval);
+    }
+  }, [settings]);
 
   // Handle mouse movement to show controls
   useEffect(() => {
@@ -65,8 +88,23 @@ export default function DisplayPage() {
     setCurrentIndex((prevIndex) => (prevIndex + 1) % images.length);
   };
 
+  // Create background style
+  const backgroundStyle = settings?.backgroundPath 
+    ? { backgroundImage: `url(${settings.backgroundPath})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+    : { backgroundColor: 'black' };
+
+  const isLoading = isLoadingSettings || isLoadingImages;
+
   return (
-    <div className="fixed inset-0 bg-black flex items-center justify-center">
+    <div 
+      className="fixed inset-0 flex items-center justify-center"
+      style={backgroundStyle}
+    >
+      {/* Semi-transparent overlay */}
+      {settings?.backgroundPath && (
+        <div className="absolute inset-0 bg-black bg-opacity-40"></div>
+      )}
+      
       {isLoading ? (
         <div className="text-white text-xl">Loading presentation...</div>
       ) : error ? (
@@ -79,7 +117,9 @@ export default function DisplayPage() {
         <>
           <DisplayCarousel 
             images={images} 
-            currentIndex={currentIndex} 
+            currentIndex={currentIndex}
+            showInfo={settings?.showInfo ?? true}
+            transitionEffect={settings?.transitionEffect ?? "slide"}
           />
           
           <DisplayControls 

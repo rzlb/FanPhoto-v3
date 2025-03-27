@@ -1,4 +1,4 @@
-import { Photo, InsertPhoto, Transformation, InsertTransformation, TransformationSettings, InsertTransformationSettings, User, InsertUser } from "@shared/schema";
+import { Photo, InsertPhoto, User, InsertUser, DisplaySettings, InsertDisplaySettings } from "@shared/schema";
 import * as fs from 'fs/promises';
 import * as path from 'path';
 
@@ -18,79 +18,37 @@ export interface IStorage {
   getApprovedPhotosCount(): Promise<number>;
   getRejectedPhotosCount(): Promise<number>;
   
-  // Transformation methods
-  getTransformations(status?: string): Promise<Transformation[]>;
-  getTransformation(id: number): Promise<Transformation | undefined>;
-  createTransformation(transformation: InsertTransformation): Promise<Transformation>;
-  updateTransformationStatus(id: number, status: string): Promise<Transformation | undefined>;
-  getApprovedTransformationsCount(): Promise<number>;
-  getPendingTransformationsCount(): Promise<number>;
-  
-  // TransformationSettings methods
-  getAllTransformationSettings(): Promise<TransformationSettings[]>;
-  getDefaultTransformationSettings(): Promise<TransformationSettings | undefined>;
-  getTransformationSettings(id: number): Promise<TransformationSettings | undefined>;
-  createTransformationSettings(settings: InsertTransformationSettings): Promise<TransformationSettings>;
-  updateTransformationSettings(id: number, settings: Partial<TransformationSettings>): Promise<TransformationSettings | undefined>;
+  // Display settings methods
+  getDisplaySettings(): Promise<DisplaySettings | undefined>;
+  updateDisplaySettings(settings: Partial<DisplaySettings>): Promise<DisplaySettings>;
+  uploadBackgroundImage(imagePath: string): Promise<DisplaySettings>;
 }
 
 export class MemStorage implements IStorage {
   private users: Map<number, User>;
   private photos: Map<number, Photo>;
-  private transformations: Map<number, Transformation>;
-  private transformationSettings: Map<number, TransformationSettings>;
+  private displaySettings: DisplaySettings | null;
   private userId: number;
   private photoId: number;
-  private transformationId: number;
-  private transformationSettingsId: number;
 
   constructor() {
     this.users = new Map();
     this.photos = new Map();
-    this.transformations = new Map();
-    this.transformationSettings = new Map();
+    this.displaySettings = null;
     this.userId = 1;
     this.photoId = 1;
-    this.transformationId = 1;
-    this.transformationSettingsId = 1;
     
-    // Initialize with default transformation settings
-    const defaultSettings: InsertTransformationSettings = {
-      stylePreset: "Abstract Watercolor",
-      promptTemplate: "Transform this image into an abstract watercolor with vibrant colors and flowing shapes, maintaining the original composition",
-      effectIntensity: 7,
-      isDefault: true
+    // Initialize with default display settings
+    this.displaySettings = {
+      id: 1,
+      backgroundPath: null,
+      autoRotate: true,
+      slideInterval: 8,
+      showInfo: true,
+      transitionEffect: "slide",
+      blacklistWords: null,
+      updatedAt: new Date()
     };
-    this.createTransformationSettings(defaultSettings);
-    
-    // Add more presets
-    this.createTransformationSettings({
-      stylePreset: "Neon Cyberpunk",
-      promptTemplate: "Transform this image into a cyberpunk scene with neon lights, high contrast, and futuristic elements",
-      effectIntensity: 8,
-      isDefault: false
-    });
-    
-    this.createTransformationSettings({
-      stylePreset: "Vintage Film",
-      promptTemplate: "Transform this image into a vintage film photograph with film grain, soft contrast, and a nostalgic color palette",
-      effectIntensity: 6,
-      isDefault: false
-    });
-    
-    this.createTransformationSettings({
-      stylePreset: "Comic Book",
-      promptTemplate: "Transform this image into a comic book style with bold outlines, flat colors, and halftone patterns",
-      effectIntensity: 9,
-      isDefault: false
-    });
-    
-    this.createTransformationSettings({
-      stylePreset: "Oil Painting",
-      promptTemplate: "Transform this image into an oil painting with textured brush strokes, rich colors, and classical composition",
-      effectIntensity: 7,
-      isDefault: false
-    });
   }
 
   // User methods
@@ -163,95 +121,36 @@ export class MemStorage implements IStorage {
     return Array.from(this.photos.values()).filter(photo => photo.status === "rejected").length;
   }
 
-  // Transformation methods
-  async getTransformations(status?: string): Promise<Transformation[]> {
-    const transformations = Array.from(this.transformations.values());
-    if (status) {
-      return transformations.filter(t => t.status === status);
+  // Display settings methods
+  async getDisplaySettings(): Promise<DisplaySettings | undefined> {
+    return this.displaySettings || undefined;
+  }
+
+  async updateDisplaySettings(settings: Partial<DisplaySettings>): Promise<DisplaySettings> {
+    if (!this.displaySettings) {
+      this.displaySettings = {
+        id: 1,
+        backgroundPath: null,
+        autoRotate: true,
+        slideInterval: 8,
+        showInfo: true,
+        transitionEffect: "slide",
+        blacklistWords: null,
+        updatedAt: new Date()
+      };
     }
-    return transformations;
-  }
-
-  async getTransformation(id: number): Promise<Transformation | undefined> {
-    return this.transformations.get(id);
-  }
-
-  async createTransformation(insertTransformation: InsertTransformation): Promise<Transformation> {
-    const id = this.transformationId++;
-    const transformation: Transformation = { 
-      ...insertTransformation, 
-      id,
-      status: "pending",
-      createdAt: new Date()
+    
+    this.displaySettings = {
+      ...this.displaySettings,
+      ...settings,
+      updatedAt: new Date()
     };
-    this.transformations.set(id, transformation);
-    return transformation;
-  }
-
-  async updateTransformationStatus(id: number, status: string): Promise<Transformation | undefined> {
-    const transformation = this.transformations.get(id);
-    if (!transformation) return undefined;
     
-    const updatedTransformation = { ...transformation, status };
-    this.transformations.set(id, updatedTransformation);
-    return updatedTransformation;
+    return this.displaySettings;
   }
 
-  async getApprovedTransformationsCount(): Promise<number> {
-    return Array.from(this.transformations.values()).filter(t => t.status === "approved").length;
-  }
-
-  async getPendingTransformationsCount(): Promise<number> {
-    return Array.from(this.transformations.values()).filter(t => t.status === "pending").length;
-  }
-
-  // TransformationSettings methods
-  async getAllTransformationSettings(): Promise<TransformationSettings[]> {
-    return Array.from(this.transformationSettings.values());
-  }
-
-  async getDefaultTransformationSettings(): Promise<TransformationSettings | undefined> {
-    return Array.from(this.transformationSettings.values()).find(settings => settings.isDefault);
-  }
-  
-  async getTransformationSettings(id: number): Promise<TransformationSettings | undefined> {
-    return this.transformationSettings.get(id);
-  }
-
-  async createTransformationSettings(insertSettings: InsertTransformationSettings): Promise<TransformationSettings> {
-    const id = this.transformationSettingsId++;
-    const settings: TransformationSettings = { ...insertSettings, id };
-    
-    // If this is marked as default, update any existing defaults
-    if (settings.isDefault) {
-      for (const [existingId, existingSettings] of this.transformationSettings.entries()) {
-        if (existingSettings.isDefault) {
-          this.transformationSettings.set(existingId, { ...existingSettings, isDefault: false });
-        }
-      }
-    }
-    
-    this.transformationSettings.set(id, settings);
-    return settings;
-  }
-
-  async updateTransformationSettings(id: number, partialSettings: Partial<TransformationSettings>): Promise<TransformationSettings | undefined> {
-    const settings = this.transformationSettings.get(id);
-    if (!settings) return undefined;
-    
-    const updatedSettings = { ...settings, ...partialSettings };
-    
-    // If this is being marked as default, update any existing defaults
-    if (partialSettings.isDefault === true) {
-      for (const [existingId, existingSettings] of this.transformationSettings.entries()) {
-        if (existingId !== id && existingSettings.isDefault) {
-          this.transformationSettings.set(existingId, { ...existingSettings, isDefault: false });
-        }
-      }
-    }
-    
-    this.transformationSettings.set(id, updatedSettings);
-    return updatedSettings;
+  async uploadBackgroundImage(imagePath: string): Promise<DisplaySettings> {
+    return this.updateDisplaySettings({ backgroundPath: imagePath });
   }
 }
 

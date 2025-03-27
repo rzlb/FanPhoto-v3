@@ -6,12 +6,10 @@ import path from "path";
 import fs from "fs";
 import { 
   photoUploadSchema, 
-  moderationActionSchema, 
-  transformationActionSchema,
-  stylePresetSchema
+  moderationActionSchema,
+  displaySettingsSchema
 } from "@shared/schema";
 import { z } from "zod";
-import { generateTransformedImage } from "./openai";
 
 // Setup upload directories
 const UPLOAD_DIR = path.join(process.cwd(), "uploads");
@@ -70,13 +68,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const pendingPhotos = await storage.getPendingPhotosCount();
       const approvedPhotos = await storage.getApprovedPhotosCount();
       const rejectedPhotos = await storage.getRejectedPhotosCount();
-      const pendingTransformations = await storage.getPendingTransformationsCount();
-      const approvedTransformations = await storage.getApprovedTransformationsCount();
       
       res.json({
         totalUploads: pendingPhotos + approvedPhotos + rejectedPhotos,
         approvedPhotos,
-        aiTransformations: approvedTransformations,
         pendingApproval: pendingPhotos
       });
     } catch (error) {
@@ -157,42 +152,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const status = action === "approve" ? "approved" : "rejected";
       const updatedPhoto = await storage.updatePhotoStatus(photoId, status);
       
-      // If approved, automatically generate a transformation
-      if (status === "approved") {
-        try {
-          const defaultSettings = await storage.getDefaultTransformationSettings();
-          
-          if (defaultSettings) {
-            // Generate the transformation
-            const originalFilePath = path.join(process.cwd(), photo.originalPath.replace('/uploads', 'uploads'));
-            const transformedImageResult = await generateTransformedImage(
-              originalFilePath,
-              defaultSettings.promptTemplate,
-              defaultSettings.effectIntensity
-            );
-            
-            if (transformedImageResult) {
-              const transformedFileName = `transformed-${Date.now()}-${photoId}.jpg`;
-              const transformedFilePath = path.join(TRANSFORMED_DIR, transformedFileName);
-              
-              // Save the transformed image
-              fs.writeFileSync(transformedFilePath, Buffer.from(transformedImageResult, 'base64'));
-              
-              // Create transformation record
-              await storage.createTransformation({
-                photoId,
-                transformedPath: `/uploads/transformed/${transformedFileName}`,
-                promptUsed: defaultSettings.promptTemplate,
-                stylePreset: defaultSettings.stylePreset
-              });
-            }
-          }
-        } catch (transformError) {
-          console.error("Transformation error:", transformError);
-          // Continue even if transformation fails
-        }
-      }
-      
       res.json(updatedPhoto);
     } catch (error) {
       console.error("Moderation error:", error);
@@ -200,226 +159,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Get transformations by status
-  app.get('/api/transformations', async (req: Request, res: Response) => {
-    try {
-      const status = req.query.status as string | undefined;
-      const transformations = await storage.getTransformations(status);
-      
-      // Fetch the original photos for each transformation
-      const transformationsWithPhotos = await Promise.all(
-        transformations.map(async (transformation) => {
-          const photo = await storage.getPhoto(transformation.photoId);
-          return {
-            ...transformation,
-            originalPhoto: photo
-          };
-        })
-      );
-      
-      res.json(transformationsWithPhotos);
-    } catch (error) {
-      res.status(500).json({ error: "Failed to fetch transformations" });
-    }
-  });
-  
-  // Create individual image transformation
-  app.post('/api/transformations', async (req: Request, res: Response) => {
-    try {
-      const { imageId, prompt, stylePreset } = req.body;
-      
-      if (!imageId || !stylePreset) {
-        return res.status(400).json({ error: "Image ID and style preset are required" });
-      }
-      
-      // Get the photo to transform
-      const photo = await storage.getPhoto(imageId);
-      if (!photo) {
-        return res.status(404).json({ error: "Photo not found" });
-      }
-      
-      // Get the transformation settings for this style
-      const allSettings = await storage.getAllTransformationSettings();
-      const settings = allSettings.find(s => s.stylePreset === stylePreset);
-      
-      if (!settings) {
-        return res.status(404).json({ error: "Style preset not found" });
-      }
-      
-      // Generate the transformed image
-      const originalFilePath = path.join(process.cwd(), photo.originalPath.replace('/uploads', 'uploads'));
-      const transformedImageResult = await generateTransformedImage(
-        originalFilePath,
-        prompt || settings.promptTemplate,
-        settings.effectIntensity
-      );
-      
-      if (!transformedImageResult) {
-        return res.status(500).json({ error: "Failed to generate transformed image" });
-      }
-      
-      // Save the transformed image
-      const transformedFileName = `transformed-${Date.now()}-${photo.id}.jpg`;
-      const transformedFilePath = path.join(TRANSFORMED_DIR, transformedFileName);
-      fs.writeFileSync(transformedFilePath, Buffer.from(transformedImageResult, 'base64'));
-      
-      // Create transformation record
-      const transformation = await storage.createTransformation({
-        photoId: photo.id,
-        transformedPath: `/uploads/transformed/${transformedFileName}`,
-        promptUsed: prompt || settings.promptTemplate,
-        stylePreset: settings.stylePreset
-      });
-      
-      res.status(201).json(transformation);
-    } catch (error) {
-      console.error("Transformation error:", error);
-      res.status(500).json({ error: "Failed to transform image" });
-    }
-  });
 
-  // Moderate transformation (approve/reject)
-  app.post('/api/transformations/moderate', async (req: Request, res: Response) => {
-    try {
-      const result = transformationActionSchema.safeParse(req.body);
-      
-      if (!result.success) {
-        return res.status(400).json({ error: result.error.errors });
-      }
-      
-      const { transformationId, action } = result.data;
-      const transformation = await storage.getTransformation(transformationId);
-      
-      if (!transformation) {
-        return res.status(404).json({ error: "Transformation not found" });
-      }
-      
-      const status = action === "approve" ? "approved" : "rejected";
-      const updatedTransformation = await storage.updateTransformationStatus(transformationId, status);
-      
-      res.json(updatedTransformation);
-    } catch (error) {
-      console.error("Transformation moderation error:", error);
-      res.status(500).json({ error: "Failed to moderate transformation" });
-    }
-  });
-  
-  // Get all transformation settings
-  app.get('/api/transformation-settings', async (req: Request, res: Response) => {
-    try {
-      const settings = await storage.getAllTransformationSettings();
-      res.json(settings);
-    } catch (error) {
-      res.status(500).json({ error: "Failed to fetch transformation settings" });
-    }
-  });
-  
-  // Get default transformation settings
-  app.get('/api/transformation-settings/default', async (req: Request, res: Response) => {
-    try {
-      const settings = await storage.getDefaultTransformationSettings();
-      
-      if (!settings) {
-        return res.status(404).json({ error: "No default transformation settings found" });
-      }
-      
-      res.json(settings);
-    } catch (error) {
-      res.status(500).json({ error: "Failed to fetch default transformation settings" });
-    }
-  });
-  
-  // Create new transformation settings
-  app.post('/api/transformation-settings', async (req: Request, res: Response) => {
-    try {
-      const result = stylePresetSchema.safeParse(req.body);
-      
-      if (!result.success) {
-        return res.status(400).json({ error: result.error.errors });
-      }
-      
-      const { name, promptTemplate, effectIntensity, isDefault } = result.data;
-      
-      const settings = await storage.createTransformationSettings({
-        stylePreset: name,
-        promptTemplate,
-        effectIntensity,
-        isDefault
-      });
-      
-      res.status(201).json(settings);
-    } catch (error) {
-      res.status(500).json({ error: "Failed to create transformation settings" });
-    }
-  });
-  
-  // Apply transformation to pending photos
-  app.post('/api/transformations/apply-to-pending', async (req: Request, res: Response) => {
-    try {
-      const settingsId = req.body.settingsId;
-      
-      if (!settingsId) {
-        return res.status(400).json({ error: "Settings ID is required" });
-      }
-      
-      const settings = await storage.getTransformationSettings(settingsId);
-      
-      if (!settings) {
-        return res.status(404).json({ error: "Transformation settings not found" });
-      }
-      
-      const approvedPhotos = await storage.getPhotos("approved");
-      const results = [];
-      
-      for (const photo of approvedPhotos) {
-        // Check if a transformation already exists for this photo with this style
-        const existingTransformations = await storage.getTransformations();
-        const hasExistingTransformation = existingTransformations.some(
-          t => t.photoId === photo.id && t.stylePreset === settings.stylePreset
-        );
-        
-        if (!hasExistingTransformation) {
-          try {
-            const originalFilePath = path.join(process.cwd(), photo.originalPath.replace('/uploads', 'uploads'));
-            const transformedImageResult = await generateTransformedImage(
-              originalFilePath,
-              settings.promptTemplate,
-              settings.effectIntensity
-            );
-            
-            if (transformedImageResult) {
-              const transformedFileName = `transformed-${Date.now()}-${photo.id}.jpg`;
-              const transformedFilePath = path.join(TRANSFORMED_DIR, transformedFileName);
-              
-              // Save the transformed image
-              fs.writeFileSync(transformedFilePath, Buffer.from(transformedImageResult, 'base64'));
-              
-              // Create transformation record
-              const transformation = await storage.createTransformation({
-                photoId: photo.id,
-                transformedPath: `/uploads/transformed/${transformedFileName}`,
-                promptUsed: settings.promptTemplate,
-                stylePreset: settings.stylePreset
-              });
-              
-              results.push(transformation);
-            }
-          } catch (transformError) {
-            console.error("Transformation error for photo", photo.id, ":", transformError);
-            // Continue with next photo even if this one fails
-          }
-        }
-      }
-      
-      res.json({
-        message: `Applied transformations to ${results.length} photos`,
-        transformations: results
-      });
-    } catch (error) {
-      console.error("Apply to pending error:", error);
-      res.status(500).json({ error: "Failed to apply transformations to pending photos" });
-    }
-  });
   
   // Generate a QR code based on hostname
   app.get('/api/qrcode', (req: Request, res: Response) => {
@@ -435,25 +175,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
   
+  // Get display settings
+  app.get('/api/display-settings', async (req: Request, res: Response) => {
+    try {
+      const settings = await storage.getDisplaySettings();
+      res.json(settings || {});
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch display settings" });
+    }
+  });
+  
+  // Update display settings
+  app.post('/api/display-settings', async (req: Request, res: Response) => {
+    try {
+      const result = displaySettingsSchema.safeParse(req.body);
+      
+      if (!result.success) {
+        return res.status(400).json({ error: result.error.errors });
+      }
+      
+      const settings = await storage.updateDisplaySettings(result.data);
+      res.json(settings);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update display settings" });
+    }
+  });
+  
+  // Upload background image for display
+  app.post('/api/display-settings/background', upload.single('background'), async (req: Request, res: Response) => {
+    try {
+      const file = req.file as Express.Multer.File;
+      
+      if (!file) {
+        return res.status(400).json({ error: "No background image uploaded" });
+      }
+      
+      const settings = await storage.uploadBackgroundImage(`/uploads/original/${file.filename}`);
+      res.json(settings);
+    } catch (error) {
+      console.error("Background upload error:", error);
+      res.status(500).json({ error: "Failed to upload background image" });
+    }
+  });
+  
   // Get approved display images
   app.get('/api/display/images', async (req: Request, res: Response) => {
     try {
-      const approvedTransformations = await storage.getTransformations("approved");
+      // Get approved photos directly
+      const approvedPhotos = await storage.getPhotos("approved");
       
-      // Fetch the original photos for each transformation
-      const displayImages = await Promise.all(
-        approvedTransformations.map(async (transformation) => {
-          const photo = await storage.getPhoto(transformation.photoId);
-          return {
-            id: transformation.id,
-            originalPath: photo?.originalPath,
-            transformedPath: transformation.transformedPath,
-            stylePreset: transformation.stylePreset,
-            submitterName: photo?.submitterName || "Anonymous",
-            createdAt: transformation.createdAt
-          };
-        })
-      );
+      // Convert to display format
+      const displayImages = approvedPhotos.map(photo => ({
+        id: photo.id,
+        originalPath: photo.originalPath,
+        submitterName: photo.submitterName || "Anonymous",
+        createdAt: photo.createdAt
+      }));
       
       res.json(displayImages);
     } catch (error) {
