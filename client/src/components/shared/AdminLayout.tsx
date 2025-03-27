@@ -17,7 +17,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
           <div className="flex justify-between h-16">
             <div className="flex">
               <div className="flex-shrink-0 flex items-center">
-                <span className="text-xl font-bold text-primary">EventWall</span>
+                <span className="text-xl font-bold text-primary">RWS FanPhoto</span>
               </div>
               <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
                 <NavLink href="/admin/dashboard" active={location === "/admin/dashboard"}>

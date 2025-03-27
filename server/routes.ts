@@ -223,6 +223,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Create individual image transformation
+  app.post('/api/transformations', async (req: Request, res: Response) => {
+    try {
+      const { imageId, prompt, stylePreset } = req.body;
+      
+      if (!imageId || !stylePreset) {
+        return res.status(400).json({ error: "Image ID and style preset are required" });
+      }
+      
+      // Get the photo to transform
+      const photo = await storage.getPhoto(imageId);
+      if (!photo) {
+        return res.status(404).json({ error: "Photo not found" });
+      }
+      
+      // Get the transformation settings for this style
+      const allSettings = await storage.getAllTransformationSettings();
+      const settings = allSettings.find(s => s.stylePreset === stylePreset);
+      
+      if (!settings) {
+        return res.status(404).json({ error: "Style preset not found" });
+      }
+      
+      // Generate the transformed image
+      const originalFilePath = path.join(process.cwd(), photo.originalPath.replace('/uploads', 'uploads'));
+      const transformedImageResult = await generateTransformedImage(
+        originalFilePath,
+        prompt || settings.promptTemplate,
+        settings.effectIntensity
+      );
+      
+      if (!transformedImageResult) {
+        return res.status(500).json({ error: "Failed to generate transformed image" });
+      }
+      
+      // Save the transformed image
+      const transformedFileName = `transformed-${Date.now()}-${photo.id}.jpg`;
+      const transformedFilePath = path.join(TRANSFORMED_DIR, transformedFileName);
+      fs.writeFileSync(transformedFilePath, Buffer.from(transformedImageResult, 'base64'));
+      
+      // Create transformation record
+      const transformation = await storage.createTransformation({
+        photoId: photo.id,
+        transformedPath: `/uploads/transformed/${transformedFileName}`,
+        promptUsed: prompt || settings.promptTemplate,
+        stylePreset: settings.stylePreset
+      });
+      
+      res.status(201).json(transformation);
+    } catch (error) {
+      console.error("Transformation error:", error);
+      res.status(500).json({ error: "Failed to transform image" });
+    }
+  });
+
   // Moderate transformation (approve/reject)
   app.post('/api/transformations/moderate', async (req: Request, res: Response) => {
     try {
@@ -412,19 +467,3 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
 // Import express for static typing
 import express from 'express';
-
-// Create a helper function for OpenAI image transformations
-async function generateTransformedImage(
-  imagePath: string,
-  prompt: string,
-  intensity: number
-): Promise<string | null> {
-  try {
-    // Just returning a mock base64 string for now
-    // This will be replaced with actual OpenAI integration
-    return "mockbase64data";
-  } catch (error) {
-    console.error("Failed to generate transformed image:", error);
-    return null;
-  }
-}

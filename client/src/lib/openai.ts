@@ -21,6 +21,8 @@ export async function requestImageTransformation(
   stylePreset: string
 ): Promise<TransformImageResponse> {
   try {
+    console.log("Requesting transformation:", { imageId, prompt, stylePreset });
+    
     const response = await apiRequest("POST", "/api/transformations", {
       imageId,
       prompt,
@@ -33,11 +35,14 @@ export async function requestImageTransformation(
     }
     
     const data = await response.json();
+    console.log("Transformation result:", data);
+    
     return {
       success: true,
       url: data.transformedPath
     };
   } catch (error) {
+    console.error("Transformation error:", error);
     return {
       success: false,
       error: error instanceof Error ? error.message : "Unknown error occurred"

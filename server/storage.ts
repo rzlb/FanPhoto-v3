@@ -29,6 +29,7 @@ export interface IStorage {
   // TransformationSettings methods
   getAllTransformationSettings(): Promise<TransformationSettings[]>;
   getDefaultTransformationSettings(): Promise<TransformationSettings | undefined>;
+  getTransformationSettings(id: number): Promise<TransformationSettings | undefined>;
   createTransformationSettings(settings: InsertTransformationSettings): Promise<TransformationSettings>;
   updateTransformationSettings(id: number, settings: Partial<TransformationSettings>): Promise<TransformationSettings | undefined>;
 }
@@ -211,6 +212,10 @@ export class MemStorage implements IStorage {
 
   async getDefaultTransformationSettings(): Promise<TransformationSettings | undefined> {
     return Array.from(this.transformationSettings.values()).find(settings => settings.isDefault);
+  }
+  
+  async getTransformationSettings(id: number): Promise<TransformationSettings | undefined> {
+    return this.transformationSettings.get(id);
   }
 
   async createTransformationSettings(insertSettings: InsertTransformationSettings): Promise<TransformationSettings> {

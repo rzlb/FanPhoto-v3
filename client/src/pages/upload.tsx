@@ -18,7 +18,7 @@ export default function UploadPage() {
       <div className="w-full max-w-lg mx-auto px-4 py-8 flex flex-col items-center">
         <div className="text-center mb-8">
           <h1 className="text-2xl font-semibold text-gray-900 mb-2">Share Your {eventName} Photos</h1>
-          <p className="text-gray-500">Upload your photos and see them transformed on the big screen!</p>
+          <p className="text-gray-500">Upload to RWS FanPhoto and see your images transformed on the big screen!</p>
         </div>
         
         <PhotoUploader />
