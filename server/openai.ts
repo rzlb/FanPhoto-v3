@@ -43,21 +43,33 @@ export async function generateTransformedImage(
     console.log(`Adjusted prompt: "${adjustedPrompt}"`);
 
     try {
-      // Call OpenAI vision API (GPT-4o) to understand the image content
-      console.log("Calling OpenAI Vision API (GPT-4o) to analyze image...");
-      const visionResponse = await openai.chat.completions.create({
+      // Use OpenAI GPT-4o for image transformation (vision + text)
+      console.log("Calling OpenAI GPT-4o to transform image...");
+      const gpt4oResponse = await openai.chat.completions.create({
         model: "gpt-4o",
         messages: [
           {
             role: "system",
-            content: "You are an expert image analyst and artist. Analyze the image and provide a detailed description that can be used to generate a new version of it with the requested style."
+            content: `You are an expert in image styling and transformation. 
+            
+Your task is to transform the provided image according to the style prompt while preserving its key elements.
+
+IMPORTANT: You MUST return ONLY a base64-encoded image in one of these formats:
+1. As a data URL: data:image/jpeg;base64,BASE64_STRING_HERE
+2. Or as raw base64 content with NO explanation text
+
+Do NOT include any explanations, descriptions, or code blocks in your response - ONLY return the transformed image.`
           },
           {
             role: "user",
             content: [
               {
                 type: "text",
-                text: `I want to transform this image using this prompt: ${adjustedPrompt}. First, describe the image in detail to preserve its core elements.`
+                text: `Transform this image using the following style: ${adjustedPrompt}. 
+
+The image should maintain its original content and composition but appear in the new style.
+
+IMPORTANT: Only respond with the transformed image as a base64 string. Don't include any explanation or description.`
               },
               {
                 type: "image_url",
@@ -68,35 +80,46 @@ export async function generateTransformedImage(
             ],
           },
         ],
-        max_tokens: 500,
+        max_tokens: 4096,
       });
       
-      console.log("OpenAI Vision API call succeeded");
-      const imageDescription = visionResponse.choices[0].message.content;
-      console.log("Image analysis:", imageDescription);
+      console.log("OpenAI GPT-4o call succeeded");
+      const responseContent = gpt4oResponse.choices[0].message.content;
+      console.log("GPT-4o response size:", responseContent?.length || 0);
       
-      // Now use DALL-E 3 to generate a new image based on the description and style
-      console.log("Calling OpenAI DALL-E 3 to generate styled image...");
-      const generationPrompt = `Based on this description: "${imageDescription}", create a new image with this style: ${adjustedPrompt}`;
+      // Look for a base64 string pattern in the response
+      // First, try to find a standard data URL pattern
+      const dataUrlPattern = /data:image\/[^;]+;base64,([A-Za-z0-9+/=]+)/;
+      const dataUrlMatch = responseContent?.match(dataUrlPattern);
       
-      const response = await openai.images.generate({
-        model: "dall-e-3",
-        prompt: generationPrompt,
-        n: 1,
-        size: "1024x1024",
-        quality: "standard",
-        response_format: "b64_json"
-      });
+      if (dataUrlMatch && dataUrlMatch[1]) {
+        const extractedBase64 = dataUrlMatch[1];
+        console.log(`Found base64 image data from data URL (${extractedBase64.length} characters)`);
+        return extractedBase64;
+      }
       
-      console.log("OpenAI DALL-E 3 call succeeded");
-
-      if (response.data && response.data.length > 0 && response.data[0].b64_json) {
-        const b64Data = response.data[0].b64_json;
-        console.log(`Received base64 image data (${b64Data.length} characters)`);
-        return b64Data;
+      // If no data URL found, look for a markdown image with base64
+      const markdownPattern = /!\[.*?\]\(data:image\/[^;]+;base64,([A-Za-z0-9+/=]+)\)/;
+      const markdownMatch = responseContent?.match(markdownPattern);
+      
+      if (markdownMatch && markdownMatch[1]) {
+        const extractedBase64 = markdownMatch[1];
+        console.log(`Found base64 image data from markdown (${extractedBase64.length} characters)`);
+        return extractedBase64;
+      }
+      
+      // If still no match, try to extract a large chunk of base64-looking content
+      const rawBase64Pattern = /([A-Za-z0-9+/=]{100,})/;
+      const rawMatch = responseContent?.match(rawBase64Pattern);
+      
+      if (rawMatch && rawMatch[1]) {
+        const extractedBase64 = rawMatch[1];
+        console.log(`Found potential base64 image data (${extractedBase64.length} characters)`);
+        return extractedBase64;
       } else {
-        console.error("No image data in response:", response);
-        throw new Error("No image data returned from OpenAI");
+        // If we couldn't extract a base64 image, use fallback
+        console.warn("Could not extract base64 image from GPT-4o response, using mockTransformation");
+        return mockGenerateTransformedImage(imagePath, prompt, intensity);
       }
     } catch (apiError) {
       console.error("OpenAI API error:", apiError);
