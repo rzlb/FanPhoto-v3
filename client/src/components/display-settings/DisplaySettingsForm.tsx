@@ -68,16 +68,16 @@ export default function DisplaySettingsForm() {
       fontFamily: "Arial",
       fontColor: "#ffffff",
     },
-    values: settings ? {
-      autoRotate: settings.autoRotate,
-      slideInterval: settings.slideInterval,
-      showInfo: settings.showInfo,
-      transitionEffect: settings.transitionEffect as "slide" | "fade" | "zoom" | "flip",
+    values: settings !== undefined ? {
+      autoRotate: settings.autoRotate || true,
+      slideInterval: settings.slideInterval || 8,
+      showInfo: settings.showInfo || true,
+      transitionEffect: (settings.transitionEffect as "slide" | "fade" | "zoom" | "flip") || "slide",
       blacklistWords: settings.blacklistWords || "",
-      borderStyle: settings.borderStyle as "none" | "solid" | "dashed" | "dotted" | "double" || "none",
+      borderStyle: (settings.borderStyle as "none" | "solid" | "dashed" | "dotted" | "double") || "none",
       borderWidth: settings.borderWidth || 0,
       borderColor: settings.borderColor || "#ffffff",
-      fontFamily: settings.fontFamily as "Arial" | "Helvetica" | "Verdana" | "Georgia" | "Times New Roman" | "Courier New" || "Arial",
+      fontFamily: (settings.fontFamily as "Arial" | "Helvetica" | "Verdana" | "Georgia" | "Times New Roman" | "Courier New") || "Arial",
       fontColor: settings.fontColor || "#ffffff",
     } : undefined,
   });
