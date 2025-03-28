@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import PhotoUploader from "@/components/upload/PhotoUploader";
+import rwsLogo from "@assets/RWS Global Logo RGB-01 (1).png";
 
 export default function UploadPage() {
   const [eventName, setEventName] = useState("Event");
@@ -18,7 +19,7 @@ export default function UploadPage() {
       <div className="w-full max-w-lg mx-auto px-4 py-8 flex flex-col items-center">
         {/* Header with logo */}
         <div className="flex items-center justify-center mb-6">
-          <img src="/assets/rws-logo-dark.png" alt="RWS Logo" className="h-10 mr-4" />
+          <img src={rwsLogo} alt="Logo" className="h-10 mr-4" />
           <h1 className="text-2xl font-bold text-gray-800">FanPhoto</h1>
         </div>
         

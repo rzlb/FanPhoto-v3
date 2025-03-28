@@ -7,6 +7,8 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
+import CameraCapture from "./CameraCapture";
+import { Camera } from "lucide-react";
 
 // Define form schema
 const formSchema = z.object({
@@ -20,6 +22,7 @@ export default function PhotoUploader() {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [captionLength, setCaptionLength] = useState(0);
+  const [showCameraCapture, setShowCameraCapture] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -73,6 +76,11 @@ export default function PhotoUploader() {
     }
     
     setSelectedFiles(newFile);
+  };
+  
+  const handleCameraCapture = (file: File) => {
+    setSelectedFiles([file]);
+    setShowCameraCapture(false);
   };
 
   const removeFile = (index: number) => {
@@ -146,6 +154,12 @@ export default function PhotoUploader() {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="w-full max-w-md">
+        {showCameraCapture && (
+          <CameraCapture 
+            onCapture={handleCameraCapture}
+            onClose={() => setShowCameraCapture(false)}
+          />
+        )}
         <div className="space-y-5">
           <FormField
             control={form.control}
@@ -204,12 +218,25 @@ export default function PhotoUploader() {
               </svg>
               <p className="text-sm text-gray-600 mb-1">Drag & drop your photo here</p>
               <p className="text-xs text-gray-500">or</p>
-              <Button
-                type="button"
-                className="mt-3 px-5 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-all duration-200 text-sm font-medium hover:scale-105"
-              >
-                Browse Files
-              </Button>
+              <div className="flex gap-2 mt-3">
+                <Button
+                  type="button"
+                  className="px-5 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-all duration-200 text-sm font-medium hover:scale-105"
+                >
+                  Browse Files
+                </Button>
+                <Button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowCameraCapture(true);
+                  }}
+                  className="px-5 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-all duration-200 text-sm font-medium hover:scale-105"
+                >
+                  <Camera className="h-4 w-4 mr-1" />
+                  Take Photo
+                </Button>
+              </div>
               <input
                 type="file"
                 id="file-upload"
