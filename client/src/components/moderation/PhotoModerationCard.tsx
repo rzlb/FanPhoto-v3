@@ -139,7 +139,7 @@ export default function PhotoModerationCard({ photo }: PhotoModerationCardProps)
           </Button>
         )}
         
-        {/* For rejected photos - show approve button */}
+        {/* For rejected photos - only show approve button */}
         {photo.status === "rejected" && (
           <Button
             onClick={() => handleModerate("approve")}
@@ -154,32 +154,19 @@ export default function PhotoModerationCard({ photo }: PhotoModerationCardProps)
           </Button>
         )}
         
-        {/* For archived photos - show both approve and reject buttons */}
+        {/* For archived photos - only show restore to approved button */}
         {photo.status === "archived" && (
-          <div className="flex space-x-2 mb-2">
-            <Button
-              onClick={() => handleModerate("approve")}
-              disabled={moderateMutation.isPending}
-              variant="default"
-              className="inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 w-1/2 justify-center"
-            >
-              <svg className="-ml-0.5 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-              </svg>
-              Restore
-            </Button>
-            <Button
-              onClick={() => handleModerate("reject")}
-              disabled={moderateMutation.isPending}
-              variant="outline"
-              className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary w-1/2 justify-center"
-            >
-              <svg className="-ml-0.5 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-              Reject
-            </Button>
-          </div>
+          <Button
+            onClick={() => handleModerate("approve")}
+            disabled={moderateMutation.isPending}
+            variant="default"
+            className="inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 w-full justify-center"
+          >
+            <svg className="-ml-0.5 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+            </svg>
+            Restore to Display
+          </Button>
         )}
       </div>
     </Card>
