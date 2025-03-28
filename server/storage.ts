@@ -47,6 +47,8 @@ export class MemStorage implements IStorage {
       autoRotate: true,
       slideInterval: 8,
       showInfo: true,
+      showCaptions: true,
+      separateCaptions: false,
       transitionEffect: "slide",
       blacklistWords: null,
       borderStyle: "none",
@@ -56,6 +58,10 @@ export class MemStorage implements IStorage {
       fontColor: "#ffffff",
       fontSize: 16,
       imagePosition: "center",
+      captionBgColor: "rgba(0,0,0,0.5)",
+      captionFontFamily: "Arial",
+      captionFontColor: "#ffffff",
+      captionFontSize: 14,
       updatedAt: new Date()
     };
   }
@@ -173,6 +179,8 @@ export class MemStorage implements IStorage {
         autoRotate: true,
         slideInterval: 8,
         showInfo: true,
+        showCaptions: true,
+        separateCaptions: false,
         transitionEffect: "slide",
         blacklistWords: null,
         borderStyle: "none",
@@ -182,6 +190,10 @@ export class MemStorage implements IStorage {
         fontColor: "#ffffff",
         fontSize: 16,
         imagePosition: "center",
+        captionBgColor: "rgba(0,0,0,0.5)",
+        captionFontFamily: "Arial",
+        captionFontColor: "#ffffff",
+        captionFontSize: 14,
         updatedAt: new Date()
       };
     }

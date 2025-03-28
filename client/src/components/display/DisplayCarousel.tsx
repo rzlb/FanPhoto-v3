@@ -13,6 +13,8 @@ interface DisplayCarouselProps {
   images: DisplayImage[];
   currentIndex: number;
   showInfo: boolean;
+  showCaptions?: boolean;
+  separateCaptions?: boolean;
   transitionEffect: string;
   borderStyle?: string;
   borderWidth?: number;
@@ -21,12 +23,18 @@ interface DisplayCarouselProps {
   fontColor?: string;
   fontSize?: number;
   imagePosition?: string;
+  captionBgColor?: string;
+  captionFontFamily?: string;
+  captionFontColor?: string;
+  captionFontSize?: number;
 }
 
 export default function DisplayCarousel({ 
   images, 
   currentIndex, 
   showInfo = true,
+  showCaptions = true,
+  separateCaptions = false,
   transitionEffect = "slide",
   borderStyle = "none",
   borderWidth = 0,
@@ -34,7 +42,11 @@ export default function DisplayCarousel({
   fontFamily = "Arial",
   fontColor = "#ffffff",
   fontSize = 16,
-  imagePosition = "center"
+  imagePosition = "center",
+  captionBgColor = "rgba(0,0,0,0.5)",
+  captionFontFamily = "Arial",
+  captionFontColor = "#ffffff",
+  captionFontSize = 14
 }: DisplayCarouselProps) {
   const [direction, setDirection] = useState(0);
   const [previousIndex, setPreviousIndex] = useState(0);
@@ -174,23 +186,42 @@ export default function DisplayCarousel({
             <img
               src={currentImage.originalPath}
               alt={`Photo by ${currentImage.submitterName}`}
-              className="max-w-full max-h-full object-contain rounded-t-md shadow-2xl"
+              className={`max-w-full max-h-full object-contain shadow-2xl ${
+                showCaptions && currentImage.caption && !separateCaptions ? 'rounded-t-md' : 'rounded-md'
+              }`}
               style={{ 
                 boxShadow: '0 4px 30px rgba(0, 0, 0, 0.5)',
-                maxHeight: currentImage.caption ? "calc(80vh - 70px)" : "80vh"
+                maxHeight: (showCaptions && currentImage.caption && !separateCaptions) ? "calc(80vh - 70px)" : "80vh"
               }}
             />
             
-            {/* Caption display - only show if caption exists */}
-            {currentImage.caption && (
+            {/* Caption display - only show if caption exists and showCaptions is true */}
+            {showCaptions && currentImage.caption && !separateCaptions && (
               <div 
-                className="w-full bg-black/80 p-4 text-center rounded-b-md"
+                className="w-full p-4 text-center rounded-b-md"
                 style={{
-                  fontFamily: fontFamily,
-                  color: fontColor,
+                  fontFamily: captionFontFamily,
+                  color: captionFontColor,
+                  backgroundColor: captionBgColor,
+                  fontSize: `${captionFontSize}px`,
                 }}
               >
-                <p style={{ fontSize: `${fontSize}px` }}>{currentImage.caption}</p>
+                {currentImage.caption}
+              </div>
+            )}
+            
+            {/* Separate caption box if separateCaptions is true */}
+            {showCaptions && currentImage.caption && separateCaptions && (
+              <div 
+                className="absolute bottom-8 left-0 right-0 mx-auto p-4 text-center rounded-md max-w-2xl"
+                style={{
+                  fontFamily: captionFontFamily,
+                  color: captionFontColor,
+                  backgroundColor: captionBgColor,
+                  fontSize: `${captionFontSize}px`,
+                }}
+              >
+                {currentImage.caption}
               </div>
             )}
           </div>

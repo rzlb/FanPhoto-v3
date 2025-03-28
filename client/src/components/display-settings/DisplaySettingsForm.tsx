@@ -20,6 +20,8 @@ const formSchema = z.object({
   autoRotate: z.boolean(),
   slideInterval: z.number().min(2).max(60),
   showInfo: z.boolean(),
+  showCaptions: z.boolean(),
+  separateCaptions: z.boolean(),
   transitionEffect: z.enum(["slide", "fade", "zoom", "flip"]),
   blacklistWords: z.string().optional(),
   borderStyle: z.enum(["none", "solid", "dashed", "dotted", "double"]),
@@ -29,6 +31,10 @@ const formSchema = z.object({
   fontColor: z.string(),
   fontSize: z.number().min(8).max(36),
   imagePosition: z.enum(["center", "top", "bottom", "left", "right"]),
+  captionBgColor: z.string(),
+  captionFontFamily: z.enum(["Arial", "Helvetica", "Verdana", "Georgia", "Times New Roman", "Courier New"]),
+  captionFontColor: z.string(),
+  captionFontSize: z.number().min(8).max(36),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -43,6 +49,8 @@ export default function DisplaySettingsForm() {
     autoRotate: boolean;
     slideInterval: number;
     showInfo: boolean; 
+    showCaptions: boolean;
+    separateCaptions: boolean;
     transitionEffect: string;
     blacklistWords: string | null;
     borderStyle: string;
@@ -52,6 +60,10 @@ export default function DisplaySettingsForm() {
     fontColor: string;
     fontSize: number;
     imagePosition: string;
+    captionBgColor: string;
+    captionFontFamily: string;
+    captionFontColor: string;
+    captionFontSize: number;
     backgroundPath: string | null;
   }>({
     queryKey: ['/api/display-settings'],
@@ -63,7 +75,9 @@ export default function DisplaySettingsForm() {
     defaultValues: {
       autoRotate: true,
       slideInterval: 8,
-      showInfo: true, 
+      showInfo: true,
+      showCaptions: true,
+      separateCaptions: false,
       transitionEffect: "slide",
       blacklistWords: "",
       borderStyle: "none",
@@ -73,11 +87,17 @@ export default function DisplaySettingsForm() {
       fontColor: "#ffffff",
       fontSize: 16,
       imagePosition: "center",
+      captionBgColor: "rgba(0,0,0,0.5)",
+      captionFontFamily: "Arial",
+      captionFontColor: "#ffffff",
+      captionFontSize: 14,
     },
     values: settings !== undefined ? {
       autoRotate: settings.autoRotate || true,
       slideInterval: settings.slideInterval || 8,
       showInfo: settings.showInfo || true,
+      showCaptions: settings.showCaptions !== undefined ? settings.showCaptions : true,
+      separateCaptions: settings.separateCaptions !== undefined ? settings.separateCaptions : false,
       transitionEffect: (settings.transitionEffect as "slide" | "fade" | "zoom" | "flip") || "slide",
       blacklistWords: settings.blacklistWords || "",
       borderStyle: (settings.borderStyle as "none" | "solid" | "dashed" | "dotted" | "double") || "none",
@@ -87,6 +107,10 @@ export default function DisplaySettingsForm() {
       fontColor: settings.fontColor || "#ffffff",
       fontSize: settings.fontSize || 16,
       imagePosition: (settings.imagePosition as "center" | "top" | "bottom" | "left" | "right") || "center",
+      captionBgColor: settings.captionBgColor || "rgba(0,0,0,0.5)",
+      captionFontFamily: (settings.captionFontFamily as "Arial" | "Helvetica" | "Verdana" | "Georgia" | "Times New Roman" | "Courier New") || "Arial",
+      captionFontColor: settings.captionFontColor || "#ffffff",
+      captionFontSize: settings.captionFontSize || 14,
     } : undefined,
   });
   
@@ -456,6 +480,187 @@ export default function DisplaySettingsForm() {
                         disabled={form.getValues().borderStyle === "none"}
                       />
                     </div>
+                  </FormItem>
+                )}
+              />
+            </div>
+            
+            <div className="border-t border-gray-200 pt-6 mt-6">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Caption Settings</h3>
+              
+              {/* Show captions */}
+              <FormField
+                control={form.control}
+                name="showCaptions"
+                render={({ field }) => (
+                  <FormItem className="flex items-center justify-between mb-4">
+                    <div>
+                      <FormLabel className="font-medium text-gray-900">
+                        Show Captions
+                      </FormLabel>
+                      <FormDescription>
+                        Display user-submitted captions with photos
+                      </FormDescription>
+                    </div>
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              
+              {/* Separate captions */}
+              <FormField
+                control={form.control}
+                name="separateCaptions"
+                render={({ field }) => (
+                  <FormItem className="flex items-center justify-between mb-4">
+                    <div>
+                      <FormLabel className="font-medium text-gray-900">
+                        Use Separate Caption Box
+                      </FormLabel>
+                      <FormDescription>
+                        Display captions in their own customizable box
+                      </FormDescription>
+                    </div>
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        disabled={!form.getValues().showCaptions}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              
+              {/* Caption background color */}
+              <FormField
+                control={form.control}
+                name="captionBgColor"
+                render={({ field }) => (
+                  <FormItem className="mb-4">
+                    <FormLabel className="font-medium text-gray-900">
+                      Caption Background Color
+                    </FormLabel>
+                    <div className="flex items-center gap-2 mt-1">
+                      <div 
+                        className="w-8 h-8 rounded-md border border-gray-300" 
+                        style={{ backgroundColor: field.value }}
+                      />
+                      <FormControl>
+                        <Input
+                          type="color"
+                          className="w-12 h-8 p-0 border-0"
+                          value={field.value}
+                          onChange={field.onChange}
+                          disabled={!form.getValues().showCaptions}
+                        />
+                      </FormControl>
+                      <Input
+                        className="flex-1"
+                        value={field.value}
+                        onChange={field.onChange}
+                        disabled={!form.getValues().showCaptions}
+                      />
+                    </div>
+                  </FormItem>
+                )}
+              />
+              
+              {/* Caption font family */}
+              <FormField
+                control={form.control}
+                name="captionFontFamily"
+                render={({ field }) => (
+                  <FormItem className="mb-4">
+                    <FormLabel className="font-medium text-gray-900">
+                      Caption Font Family
+                    </FormLabel>
+                    <Select 
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                      value={field.value}
+                      disabled={!form.getValues().showCaptions}
+                    >
+                      <FormControl>
+                        <SelectTrigger className="w-full mt-1">
+                          <SelectValue placeholder="Select font family" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="Arial">Arial</SelectItem>
+                        <SelectItem value="Helvetica">Helvetica</SelectItem>
+                        <SelectItem value="Verdana">Verdana</SelectItem>
+                        <SelectItem value="Georgia">Georgia</SelectItem>
+                        <SelectItem value="Times New Roman">Times New Roman</SelectItem>
+                        <SelectItem value="Courier New">Courier New</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </FormItem>
+                )}
+              />
+              
+              {/* Caption font color */}
+              <FormField
+                control={form.control}
+                name="captionFontColor"
+                render={({ field }) => (
+                  <FormItem className="mb-4">
+                    <FormLabel className="font-medium text-gray-900">
+                      Caption Font Color
+                    </FormLabel>
+                    <div className="flex items-center gap-2 mt-1">
+                      <div 
+                        className="w-8 h-8 rounded-md border border-gray-300" 
+                        style={{ backgroundColor: field.value }}
+                      />
+                      <FormControl>
+                        <Input
+                          type="color"
+                          className="w-12 h-8 p-0 border-0"
+                          value={field.value}
+                          onChange={field.onChange}
+                          disabled={!form.getValues().showCaptions}
+                        />
+                      </FormControl>
+                      <Input
+                        className="flex-1"
+                        value={field.value}
+                        onChange={field.onChange}
+                        disabled={!form.getValues().showCaptions}
+                      />
+                    </div>
+                  </FormItem>
+                )}
+              />
+              
+              {/* Caption font size */}
+              <FormField
+                control={form.control}
+                name="captionFontSize"
+                render={({ field }) => (
+                  <FormItem className="mb-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <FormLabel className="font-medium text-gray-900">
+                        Caption Font Size
+                      </FormLabel>
+                      <span className="text-sm text-gray-500">{field.value}px</span>
+                    </div>
+                    <FormControl>
+                      <Slider
+                        value={[field.value]}
+                        max={36}
+                        min={8}
+                        step={1}
+                        onValueChange={(values) => field.onChange(values[0])}
+                        className="w-full"
+                        disabled={!form.getValues().showCaptions}
+                      />
+                    </FormControl>
                   </FormItem>
                 )}
               />

@@ -152,7 +152,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Photo not found" });
       }
       
-      const status = action === "approve" ? "approved" : "rejected";
+      let status;
+      if (action === "approve") {
+        status = "approved";
+      } else if (action === "reject") {
+        status = "rejected";
+      } else if (action === "archive") {
+        status = "archived"; 
+      } else {
+        status = "rejected";
+      }
       const updatedPhoto = await storage.updatePhotoStatus(photoId, status);
       
       res.json(updatedPhoto);
@@ -267,7 +276,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get approved display images
   app.get('/api/display/images', async (req: Request, res: Response) => {
     try {
-      // Get approved photos directly
+      // Get approved photos directly (excluding archived photos)
       const approvedPhotos = await storage.getPhotos("approved");
       
       // Sort by display order (lower values first, then by createdAt date)

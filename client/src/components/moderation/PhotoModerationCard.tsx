@@ -15,7 +15,7 @@ export default function PhotoModerationCard({ photo }: PhotoModerationCardProps)
   const { toast } = useToast();
   
   const moderateMutation = useMutation({
-    mutationFn: async ({ photoId, action }: { photoId: number; action: "approve" | "reject" }) => {
+    mutationFn: async ({ photoId, action }: { photoId: number; action: "approve" | "reject" | "archive" }) => {
       const response = await apiRequest("POST", "/api/photos/moderate", { photoId, action });
       return response.json();
     },
@@ -37,7 +37,7 @@ export default function PhotoModerationCard({ photo }: PhotoModerationCardProps)
     },
   });
 
-  const handleModerate = (action: "approve" | "reject") => {
+  const handleModerate = (action: "approve" | "reject" | "archive") => {
     moderateMutation.mutate({ photoId: photo.id, action });
   };
 
@@ -65,9 +65,26 @@ export default function PhotoModerationCard({ photo }: PhotoModerationCardProps)
               {photo.createdAt ? formatDistanceToNow(new Date(photo.createdAt), { addSuffix: true }) : "Recently"}
             </p>
           </div>
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-            Pending
-          </span>
+          {photo.status === "pending" && (
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+              Pending
+            </span>
+          )}
+          {photo.status === "approved" && (
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+              Approved
+            </span>
+          )}
+          {photo.status === "rejected" && (
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+              Rejected
+            </span>
+          )}
+          {photo.status === "archived" && (
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+              Archived
+            </span>
+          )}
         </div>
         
         {/* Display caption if available */}
@@ -79,7 +96,7 @@ export default function PhotoModerationCard({ photo }: PhotoModerationCardProps)
         )}
       </div>
       <div className="p-4">
-        <div className="flex space-x-2">
+        <div className="flex space-x-2 mb-2">
           <Button
             onClick={() => handleModerate("approve")}
             disabled={moderateMutation.isPending}
@@ -103,6 +120,20 @@ export default function PhotoModerationCard({ photo }: PhotoModerationCardProps)
             Reject
           </Button>
         </div>
+        
+        {photo.status === "approved" && (
+          <Button
+            onClick={() => handleModerate("archive")}
+            disabled={moderateMutation.isPending}
+            variant="secondary"
+            className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary w-full justify-center"
+          >
+            <svg className="-ml-0.5 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+            </svg>
+            Archive
+          </Button>
+        )}
       </div>
     </Card>
   );

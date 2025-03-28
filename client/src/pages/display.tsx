@@ -18,6 +18,8 @@ interface DisplaySettings {
   autoRotate: boolean;
   slideInterval: number;
   showInfo: boolean;
+  showCaptions: boolean;
+  separateCaptions: boolean;
   transitionEffect: string;
   blacklistWords: string | null;
   borderStyle: string;
@@ -27,6 +29,10 @@ interface DisplaySettings {
   fontColor: string;
   fontSize: number;
   imagePosition: string;
+  captionBgColor: string;
+  captionFontFamily: string;
+  captionFontColor: string;
+  captionFontSize: number;
   updatedAt: string;
 }
 
@@ -143,6 +149,8 @@ export default function DisplayPage() {
             images={images} 
             currentIndex={currentIndex}
             showInfo={settings?.showInfo ?? true}
+            showCaptions={settings?.showCaptions ?? true}
+            separateCaptions={settings?.separateCaptions ?? false}
             transitionEffect={settings?.transitionEffect ?? "slide"}
             borderStyle={settings?.borderStyle ?? "none"}
             borderWidth={settings?.borderWidth ?? 0}
@@ -151,6 +159,10 @@ export default function DisplayPage() {
             fontColor={settings?.fontColor ?? "#333333"}
             fontSize={settings?.fontSize ?? 16}
             imagePosition={settings?.imagePosition ?? "center"}
+            captionBgColor={settings?.captionBgColor ?? "rgba(0,0,0,0.5)"}
+            captionFontFamily={settings?.captionFontFamily ?? "Arial"}
+            captionFontColor={settings?.captionFontColor ?? "#ffffff"}
+            captionFontSize={settings?.captionFontSize ?? 14}
           />
           
           <DisplayControls 
