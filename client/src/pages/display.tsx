@@ -113,7 +113,7 @@ export default function DisplayPage() {
       
       {/* RWS Logo */}
       <div className="absolute top-6 left-6 z-10">
-        <img src="/assets/rws-logo.png" alt="RWS Logo" className="h-10 md:h-14" />
+        <img src="/assets/rws-logo.png" alt="RWS Global" className="h-16 md:h-20" />
       </div>
       
       {isLoading ? (

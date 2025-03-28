@@ -69,6 +69,14 @@ export default function PhotoModerationCard({ photo }: PhotoModerationCardProps)
             Pending
           </span>
         </div>
+        
+        {/* Display caption if available */}
+        {photo.caption && (
+          <div className="mt-3 pt-3 border-t border-gray-100">
+            <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Caption:</h4>
+            <p className="text-sm text-gray-700">{photo.caption}</p>
+          </div>
+        )}
       </div>
       <div className="p-4">
         <div className="flex space-x-2">
