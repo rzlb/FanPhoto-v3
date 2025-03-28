@@ -58,10 +58,19 @@ export default function DisplaySettingsForm() {
   // Handle settings update
   const updateSettingsMutation = useMutation({
     mutationFn: async (data: FormValues) => {
-      return apiRequest('/api/display-settings', {
+      const response = await fetch('/api/display-settings', {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify(data)
       });
+      
+      if (!response.ok) {
+        throw new Error('Failed to save display settings');
+      }
+      
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/display-settings'] });
@@ -82,10 +91,16 @@ export default function DisplaySettingsForm() {
   // Handle background image upload
   const uploadBackgroundMutation = useMutation({
     mutationFn: async (formData: FormData) => {
-      return apiRequest('/api/display-settings/background', {
+      const response = await fetch('/api/display-settings/background', {
         method: 'POST',
-        body: formData,
+        body: formData
       });
+      
+      if (!response.ok) {
+        throw new Error('Failed to upload background image');
+      }
+      
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/display-settings'] });

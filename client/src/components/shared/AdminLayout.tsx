@@ -26,9 +26,6 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                 <NavLink href="/admin/moderation" active={location === "/admin/moderation"}>
                   Moderation
                 </NavLink>
-                <NavLink href="/admin/transformations" active={location === "/admin/transformations"}>
-                  Transformations
-                </NavLink>
                 <NavLink href="/admin/display-settings" active={location === "/admin/display-settings"}>
                   Display Settings
                 </NavLink>

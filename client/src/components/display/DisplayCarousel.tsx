@@ -84,10 +84,26 @@ export default function DisplayCarousel({
     }
   };
 
+  const flipVariants = {
+    enter: {
+      rotateY: 90,
+      opacity: 0
+    },
+    center: {
+      rotateY: 0,
+      opacity: 1
+    },
+    exit: {
+      rotateY: -90,
+      opacity: 0
+    }
+  };
+
   // Choose the right animation variant based on the effect
   const variants = 
     transitionEffect === "fade" ? fadeVariants :
     transitionEffect === "zoom" ? zoomVariants :
+    transitionEffect === "flip" ? flipVariants :
     slideVariants; // Default to slide
 
   // For the transition properties
@@ -97,6 +113,10 @@ export default function DisplayCarousel({
     } :
     transitionEffect === "zoom" ? {
       scale: { type: "spring", stiffness: 300, damping: 30 },
+      opacity: { duration: 0.3 }
+    } :
+    transitionEffect === "flip" ? {
+      rotateY: { duration: 0.6 },
       opacity: { duration: 0.3 }
     } : {
       x: { type: "spring", stiffness: 300, damping: 30 },
