@@ -76,7 +76,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         totalUploads: pendingPhotos + approvedPhotos + rejectedPhotos + archivedPhotos,
         approvedPhotos,
         pendingApproval: pendingPhotos,
-        archived: archivedPhotos
+        archivedPhotos
       });
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch stats" });

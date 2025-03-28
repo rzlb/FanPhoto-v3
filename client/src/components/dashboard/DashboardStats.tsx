@@ -5,8 +5,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 interface StatsResponse {
   totalUploads: number;
   approvedPhotos: number;
-  aiTransformations: number;
   pendingApproval: number;
+  archivedPhotos: number;
 }
 
 export default function DashboardStats() {
@@ -63,15 +63,15 @@ export default function DashboardStats() {
       textColor: "text-green-600"
     },
     {
-      title: "AI Transformations",
-      value: data?.aiTransformations || 0,
+      title: "Archived Photos",
+      value: data?.archivedPhotos || 0,
       icon: (
-        <svg className="h-6 w-6 text-secondary-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+        <svg className="h-6 w-6 text-purple-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
         </svg>
       ),
-      bgColor: "bg-secondary-100",
-      textColor: "text-secondary-600"
+      bgColor: "bg-purple-100",
+      textColor: "text-purple-600"
     },
     {
       title: "Pending Approval",
