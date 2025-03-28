@@ -7,7 +7,9 @@ import fs from "fs";
 import { 
   photoUploadSchema, 
   moderationActionSchema,
-  displaySettingsSchema
+  displaySettingsSchema,
+  reorderPhotosSchema,
+  photoDisplayOrderSchema
 } from "@shared/schema";
 import { z } from "zod";
 
@@ -219,18 +221,79 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Update photo display order (single photo)
+  app.post('/api/photos/display-order', async (req: Request, res: Response) => {
+    try {
+      const result = photoDisplayOrderSchema.safeParse(req.body);
+      
+      if (!result.success) {
+        return res.status(400).json({ error: result.error.errors });
+      }
+      
+      const { photoId, displayOrder } = result.data;
+      const photo = await storage.getPhoto(photoId);
+      
+      if (!photo) {
+        return res.status(404).json({ error: "Photo not found" });
+      }
+      
+      const updatedPhoto = await storage.updatePhotoDisplayOrder(photoId, displayOrder);
+      res.json(updatedPhoto);
+    } catch (error) {
+      console.error("Display order update error:", error);
+      res.status(500).json({ error: "Failed to update photo display order" });
+    }
+  });
+  
+  // Batch update multiple photos' display order
+  app.post('/api/photos/reorder', async (req: Request, res: Response) => {
+    try {
+      const result = reorderPhotosSchema.safeParse(req.body);
+      
+      if (!result.success) {
+        return res.status(400).json({ error: result.error.errors });
+      }
+      
+      const { photoOrders } = result.data;
+      const updatedPhotos = await storage.updatePhotosDisplayOrder(photoOrders);
+      
+      res.json(updatedPhotos);
+    } catch (error) {
+      console.error("Reorder photos error:", error);
+      res.status(500).json({ error: "Failed to reorder photos" });
+    }
+  });
+  
   // Get approved display images
   app.get('/api/display/images', async (req: Request, res: Response) => {
     try {
       // Get approved photos directly
       const approvedPhotos = await storage.getPhotos("approved");
       
+      // Sort by display order (lower values first, then by createdAt date)
+      const sortedPhotos = [...approvedPhotos].sort((a, b) => {
+        // Handle null/undefined cases
+        const orderA = a.displayOrder === null || a.displayOrder === undefined ? Number.MAX_SAFE_INTEGER : a.displayOrder;
+        const orderB = b.displayOrder === null || b.displayOrder === undefined ? Number.MAX_SAFE_INTEGER : b.displayOrder;
+        
+        // Compare display orders
+        if (orderA !== orderB) {
+          return orderA - orderB;
+        }
+        
+        // If same order or both don't have order, sort by date (most recent first)
+        const timeA = a.createdAt ? a.createdAt.getTime() : 0;
+        const timeB = b.createdAt ? b.createdAt.getTime() : 0;
+        return timeB - timeA;
+      });
+      
       // Convert to display format
-      const displayImages = approvedPhotos.map(photo => ({
+      const displayImages = sortedPhotos.map(photo => ({
         id: photo.id,
         originalPath: photo.originalPath,
         submitterName: photo.submitterName || "Anonymous",
         caption: photo.caption,
+        displayOrder: photo.displayOrder,
         createdAt: photo.createdAt
       }));
       

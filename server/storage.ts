@@ -13,6 +13,8 @@ export interface IStorage {
   getPhoto(id: number): Promise<Photo | undefined>;
   createPhoto(photo: InsertPhoto): Promise<Photo>;
   updatePhotoStatus(id: number, status: string): Promise<Photo | undefined>;
+  updatePhotoDisplayOrder(id: number, displayOrder: number): Promise<Photo | undefined>;
+  updatePhotosDisplayOrder(orders: {photoId: number, displayOrder: number}[]): Promise<Photo[]>;
   getRecentPhotos(limit: number): Promise<Photo[]>;
   getPendingPhotosCount(): Promise<number>;
   getApprovedPhotosCount(): Promise<number>;
@@ -95,6 +97,7 @@ export class MemStorage implements IStorage {
       status: "pending",
       caption: insertPhoto.caption || null,
       submitterName: insertPhoto.submitterName || null,
+      displayOrder: 0,
       createdAt: new Date()
     };
     this.photos.set(id, photo);
@@ -108,6 +111,30 @@ export class MemStorage implements IStorage {
     const updatedPhoto = { ...photo, status };
     this.photos.set(id, updatedPhoto);
     return updatedPhoto;
+  }
+
+  async updatePhotoDisplayOrder(id: number, displayOrder: number): Promise<Photo | undefined> {
+    const photo = this.photos.get(id);
+    if (!photo) return undefined;
+    
+    const updatedPhoto = { ...photo, displayOrder };
+    this.photos.set(id, updatedPhoto);
+    return updatedPhoto;
+  }
+
+  async updatePhotosDisplayOrder(orders: {photoId: number, displayOrder: number}[]): Promise<Photo[]> {
+    const updatedPhotos: Photo[] = [];
+
+    for (const order of orders) {
+      const photo = this.photos.get(order.photoId);
+      if (photo) {
+        const updatedPhoto = { ...photo, displayOrder: order.displayOrder };
+        this.photos.set(order.photoId, updatedPhoto);
+        updatedPhotos.push(updatedPhoto);
+      }
+    }
+
+    return updatedPhotos;
   }
 
   async getRecentPhotos(limit: number): Promise<Photo[]> {

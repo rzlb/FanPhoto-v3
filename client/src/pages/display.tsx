@@ -8,6 +8,7 @@ interface DisplayImage {
   originalPath: string;
   submitterName: string;
   caption?: string;
+  displayOrder?: number;
   createdAt: string;
 }
 
@@ -39,10 +40,17 @@ export default function DisplayPage() {
   });
 
   // Fetch images
-  const { data: images, isLoading: isLoadingImages, error } = useQuery<DisplayImage[]>({
+  const { data: rawImages, isLoading: isLoadingImages, error } = useQuery<DisplayImage[]>({
     queryKey: ["/api/display/images"],
     refetchInterval: isPaused ? false : interval * 1000, // Refetch based on slideshow interval
   });
+  
+  // Sort images by displayOrder
+  const images = rawImages ? [...rawImages].sort((a, b) => {
+    const orderA = a.displayOrder !== undefined ? a.displayOrder : Number.MAX_SAFE_INTEGER;
+    const orderB = b.displayOrder !== undefined ? b.displayOrder : Number.MAX_SAFE_INTEGER;
+    return orderA - orderB;
+  }) : undefined;
 
   // Update local settings from fetched settings
   useEffect(() => {

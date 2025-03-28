@@ -19,6 +19,7 @@ export const photos = pgTable("photos", {
   submitterName: text("submitter_name"),
   caption: text("caption"),
   status: text("status").notNull().default("pending"), // pending, approved, rejected
+  displayOrder: integer("display_order").default(0), // For ordering photos in the display rotation
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -91,4 +92,13 @@ export const displaySettingsSchema = z.object({
   borderColor: z.string().default("#ffffff"),
   fontFamily: z.enum(["Arial", "Helvetica", "Verdana", "Georgia", "Times New Roman", "Courier New"]).default("Arial"),
   fontColor: z.string().default("#ffffff"),
+});
+
+export const photoDisplayOrderSchema = z.object({
+  photoId: z.number(),
+  displayOrder: z.number().int().min(0),
+});
+
+export const reorderPhotosSchema = z.object({
+  photoOrders: z.array(photoDisplayOrderSchema)
 });
