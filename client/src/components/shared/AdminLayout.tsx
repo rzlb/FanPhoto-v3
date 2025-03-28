@@ -17,7 +17,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
           <div className="flex justify-between h-16">
             <div className="flex">
               <div className="flex-shrink-0 flex items-center">
-                <img src="/assets/rws-logo.png" alt="RWS Logo" className="h-8 mr-3" />
+                <img src="/assets/rws-logo-dark.png" alt="RWS Logo" className="h-8 mr-3" />
                 <span className="text-xl font-bold text-gray-800">FanPhoto</span>
               </div>
               <div className="hidden sm:ml-8 sm:flex sm:space-x-8">

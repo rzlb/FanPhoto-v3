@@ -18,8 +18,8 @@ export default function UploadPage() {
       <div className="w-full max-w-lg mx-auto px-4 py-8 flex flex-col items-center">
         {/* Header with logo */}
         <div className="flex items-center justify-center mb-6">
-          <img src="/assets/rws-logo.png" alt="RWS Logo" className="h-10 mr-4" />
-          <h1 className="text-2xl font-bold text-white glow-text">RWS FanPhoto</h1>
+          <img src="/assets/rws-logo-dark.png" alt="RWS Logo" className="h-10 mr-4" />
+          <h1 className="text-2xl font-bold text-white glow-text">FanPhoto</h1>
         </div>
         
         <div className="text-center mb-8">
