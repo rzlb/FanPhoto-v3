@@ -97,7 +97,7 @@ export default function DisplayPage() {
   // Create background style
   const backgroundStyle = settings?.backgroundPath 
     ? { backgroundImage: `url(${settings.backgroundPath})`, backgroundSize: 'cover', backgroundPosition: 'center' }
-    : { backgroundColor: 'black' };
+    : { backgroundColor: 'white' };
 
   const isLoading = isLoadingSettings || isLoadingImages;
 
@@ -108,7 +108,7 @@ export default function DisplayPage() {
     >
       {/* Semi-transparent overlay */}
       {settings?.backgroundPath && (
-        <div className="absolute inset-0 bg-black bg-opacity-60"></div>
+        <div className="absolute inset-0 bg-white bg-opacity-70"></div>
       )}
       
       {/* RWS Logo */}
@@ -117,15 +117,15 @@ export default function DisplayPage() {
       </div>
       
       {isLoading ? (
-        <div className="text-white text-xl glow-text">Loading presentation...</div>
+        <div className="text-gray-800 text-xl">Loading presentation...</div>
       ) : error ? (
-        <div className="text-red-500 text-xl glow-text">
+        <div className="text-red-500 text-xl">
           Error loading images: {error instanceof Error ? error.message : "Unknown error"}
         </div>
       ) : !images || images.length === 0 ? (
         <div className="flex flex-col items-center justify-center h-full w-full">
-          <div className="text-white text-2xl glow-text mb-4">No approved images available</div>
-          <div className="text-gray-300 text-lg">Upload photos by scanning the QR code at the venue</div>
+          <div className="text-gray-800 text-2xl mb-4">No approved images available</div>
+          <div className="text-gray-600 text-lg">Upload photos by scanning the QR code at the venue</div>
         </div>
       ) : (
         <>
@@ -136,9 +136,9 @@ export default function DisplayPage() {
             transitionEffect={settings?.transitionEffect ?? "slide"}
             borderStyle={settings?.borderStyle ?? "none"}
             borderWidth={settings?.borderWidth ?? 0}
-            borderColor={settings?.borderColor ?? "#ffffff"}
+            borderColor={settings?.borderColor ?? "#cccccc"}
             fontFamily={settings?.fontFamily ?? "Arial"}
-            fontColor={settings?.fontColor ?? "#ffffff"}
+            fontColor={settings?.fontColor ?? "#333333"}
           />
           
           <DisplayControls 

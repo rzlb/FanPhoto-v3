@@ -13,8 +13,8 @@ export default function NavLink({ href, active, children }: NavLinkProps) {
       <a
         className={cn(
           active
-            ? "border-primary text-white"
-            : "border-transparent text-gray-300 hover:border-gray-400 hover:text-white",
+            ? "border-primary text-primary font-medium"
+            : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700",
           "inline-flex items-center px-3 pt-1 border-b-2 text-sm font-medium transition-colors duration-200"
         )}
       >
