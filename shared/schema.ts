@@ -42,6 +42,8 @@ export const displaySettings = pgTable("display_settings", {
   borderColor: text("border_color").default("#ffffff"),
   fontFamily: text("font_family").default("Arial"),
   fontColor: text("font_color").default("#ffffff"),
+  fontSize: integer("font_size").default(16),
+  imagePosition: text("image_position").default("center"),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
@@ -57,6 +59,8 @@ export const insertDisplaySettingsSchema = createInsertSchema(displaySettings).p
   borderColor: true,
   fontFamily: true,
   fontColor: true,
+  fontSize: true,
+  imagePosition: true,
 });
 
 // Types
@@ -92,6 +96,8 @@ export const displaySettingsSchema = z.object({
   borderColor: z.string().default("#ffffff"),
   fontFamily: z.enum(["Arial", "Helvetica", "Verdana", "Georgia", "Times New Roman", "Courier New"]).default("Arial"),
   fontColor: z.string().default("#ffffff"),
+  fontSize: z.number().min(8).max(36).default(16),
+  imagePosition: z.enum(["center", "top", "bottom", "left", "right"]).default("center"),
 });
 
 export const photoDisplayOrderSchema = z.object({

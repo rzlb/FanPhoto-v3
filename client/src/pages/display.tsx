@@ -25,6 +25,8 @@ interface DisplaySettings {
   borderColor: string;
   fontFamily: string;
   fontColor: string;
+  fontSize: number;
+  imagePosition: string;
   updatedAt: string;
 }
 
@@ -147,6 +149,8 @@ export default function DisplayPage() {
             borderColor={settings?.borderColor ?? "#cccccc"}
             fontFamily={settings?.fontFamily ?? "Arial"}
             fontColor={settings?.fontColor ?? "#333333"}
+            fontSize={settings?.fontSize ?? 16}
+            imagePosition={settings?.imagePosition ?? "center"}
           />
           
           <DisplayControls 

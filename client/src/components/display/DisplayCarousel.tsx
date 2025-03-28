@@ -19,6 +19,8 @@ interface DisplayCarouselProps {
   borderColor?: string;
   fontFamily?: string;
   fontColor?: string;
+  fontSize?: number;
+  imagePosition?: string;
 }
 
 export default function DisplayCarousel({ 
@@ -30,7 +32,9 @@ export default function DisplayCarousel({
   borderWidth = 0,
   borderColor = "#ffffff",
   fontFamily = "Arial",
-  fontColor = "#ffffff"
+  fontColor = "#ffffff",
+  fontSize = 16,
+  imagePosition = "center"
 }: DisplayCarouselProps) {
   const [direction, setDirection] = useState(0);
   const [previousIndex, setPreviousIndex] = useState(0);
@@ -145,7 +149,14 @@ export default function DisplayCarousel({
           animate="center"
           exit="exit"
           transition={transition}
-          className="w-full h-full flex items-center justify-center p-4 md:p-8 lg:p-12"
+          className={`w-full h-full flex p-4 md:p-8 lg:p-12 ${
+            imagePosition === 'center' ? 'items-center justify-center' :
+            imagePosition === 'top' ? 'items-start justify-center' :
+            imagePosition === 'bottom' ? 'items-end justify-center' :
+            imagePosition === 'left' ? 'items-center justify-start' :
+            imagePosition === 'right' ? 'items-center justify-end' :
+            'items-center justify-center'
+          }`}
         >
           <div
             className="relative rounded-md"
@@ -179,7 +190,7 @@ export default function DisplayCarousel({
                   color: fontColor,
                 }}
               >
-                <p className="text-lg md:text-xl">{currentImage.caption}</p>
+                <p style={{ fontSize: `${fontSize}px` }}>{currentImage.caption}</p>
               </div>
             )}
           </div>
@@ -192,10 +203,10 @@ export default function DisplayCarousel({
                 color: fontColor,
               }}
             >
-              <p className="text-base md:text-lg font-semibold">
+              <p style={{ fontSize: `${fontSize - 2}px`, fontWeight: 'bold' }}>
                 By: {currentImage.submitterName || "Anonymous"}
               </p>
-              <p className="text-xs md:text-sm opacity-80">
+              <p style={{ fontSize: `${fontSize - 4}px`, opacity: 0.8 }}>
                 {new Date(currentImage.createdAt).toLocaleDateString(undefined, {
                   year: 'numeric',
                   month: 'long',

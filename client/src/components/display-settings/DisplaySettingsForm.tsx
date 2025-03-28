@@ -27,6 +27,8 @@ const formSchema = z.object({
   borderColor: z.string(),
   fontFamily: z.enum(["Arial", "Helvetica", "Verdana", "Georgia", "Times New Roman", "Courier New"]),
   fontColor: z.string(),
+  fontSize: z.number().min(8).max(36),
+  imagePosition: z.enum(["center", "top", "bottom", "left", "right"]),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -48,6 +50,8 @@ export default function DisplaySettingsForm() {
     borderColor: string;
     fontFamily: string;
     fontColor: string;
+    fontSize: number;
+    imagePosition: string;
     backgroundPath: string | null;
   }>({
     queryKey: ['/api/display-settings'],
@@ -67,6 +71,8 @@ export default function DisplaySettingsForm() {
       borderColor: "#ffffff",
       fontFamily: "Arial",
       fontColor: "#ffffff",
+      fontSize: 16,
+      imagePosition: "center",
     },
     values: settings !== undefined ? {
       autoRotate: settings.autoRotate || true,
@@ -79,6 +85,8 @@ export default function DisplaySettingsForm() {
       borderColor: settings.borderColor || "#ffffff",
       fontFamily: (settings.fontFamily as "Arial" | "Helvetica" | "Verdana" | "Georgia" | "Times New Roman" | "Courier New") || "Arial",
       fontColor: settings.fontColor || "#ffffff",
+      fontSize: settings.fontSize || 16,
+      imagePosition: (settings.imagePosition as "center" | "top" | "bottom" | "left" | "right") || "center",
     } : undefined,
   });
   
@@ -516,6 +524,63 @@ export default function DisplaySettingsForm() {
                         onChange={field.onChange}
                       />
                     </div>
+                  </FormItem>
+                )}
+              />
+              
+              {/* Font size */}
+              <FormField
+                control={form.control}
+                name="fontSize"
+                render={({ field }) => (
+                  <FormItem className="mb-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <FormLabel className="font-medium text-gray-900">
+                        Font Size
+                      </FormLabel>
+                      <span className="text-sm text-gray-500">{field.value}px</span>
+                    </div>
+                    <FormControl>
+                      <Slider
+                        value={[field.value]}
+                        max={36}
+                        min={8}
+                        step={1}
+                        onValueChange={(values) => field.onChange(values[0])}
+                        className="w-full"
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              
+              {/* Image position */}
+              <FormField
+                control={form.control}
+                name="imagePosition"
+                render={({ field }) => (
+                  <FormItem className="mb-4">
+                    <FormLabel className="font-medium text-gray-900">
+                      Image Position
+                    </FormLabel>
+                    <Select 
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                      value={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger className="w-full mt-1">
+                          <SelectValue placeholder="Select image position" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="center">Center</SelectItem>
+                        <SelectItem value="top">Top</SelectItem>
+                        <SelectItem value="bottom">Bottom</SelectItem>
+                        <SelectItem value="left">Left</SelectItem>
+                        <SelectItem value="right">Right</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </FormItem>
                 )}
               />

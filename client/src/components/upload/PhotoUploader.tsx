@@ -60,19 +60,19 @@ export default function PhotoUploader() {
   const handleFiles = (fileList: FileList) => {
     const files = Array.from(fileList).filter(file => file.type.startsWith('image/'));
     
-    // Limit to 5 files
-    const newFiles = files.slice(0, 5);
+    // Limit to 1 file
+    const newFile = files.slice(0, 1);
     
-    if (newFiles.length === 0) {
+    if (newFile.length === 0) {
       toast({
-        title: "Invalid files",
-        description: "Please select image files only (JPG, PNG, etc).",
+        title: "Invalid file",
+        description: "Please select an image file only (JPG, PNG, etc).",
         variant: "destructive",
       });
       return;
     }
     
-    setSelectedFiles(newFiles);
+    setSelectedFiles(newFile);
   };
 
   const removeFile = (index: number) => {
@@ -89,8 +89,8 @@ export default function PhotoUploader() {
   const onSubmit = async (data: FormValues) => {
     if (selectedFiles.length === 0) {
       toast({
-        title: "No files selected",
-        description: "Please select at least one photo to upload.",
+        title: "No file selected",
+        description: "Please select a photo to upload.",
         variant: "destructive",
       });
       return;
@@ -125,7 +125,7 @@ export default function PhotoUploader() {
 
       toast({
         title: "Upload successful!",
-        description: "Your photos have been submitted for moderation.",
+        description: "Your photo has been submitted for moderation.",
       });
 
       // Reset form
@@ -135,7 +135,7 @@ export default function PhotoUploader() {
       console.error("Upload error:", error);
       toast({
         title: "Upload failed",
-        description: "There was an error uploading your photos. Please try again.",
+        description: "There was an error uploading your photo. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -202,7 +202,7 @@ export default function PhotoUploader() {
               <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-blue-500 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6.996 6 6 6H4a2 2 0 00-2 2v2a2 2 0 002 2h16a2 2 0 002-2V8a2 2 0 00-2-2h-3.5V6a1 1 0 10-2 0v.5h-3.5V6a1 1 0 10-2 0v.5h-1.996l-1-1z" />
               </svg>
-              <p className="text-sm text-gray-600 mb-1">Drag & drop your photos here</p>
+              <p className="text-sm text-gray-600 mb-1">Drag & drop your photo here</p>
               <p className="text-xs text-gray-500">or</p>
               <Button
                 type="button"
@@ -216,17 +216,16 @@ export default function PhotoUploader() {
                 ref={fileInputRef}
                 className="hidden"
                 accept="image/*"
-                multiple
                 onChange={handleFileInput}
               />
-              <p className="text-xs text-gray-500 mt-3">Maximum 5 photos (JPG, PNG)</p>
+              <p className="text-xs text-gray-500 mt-3">Upload 1 photo at a time (JPG, PNG)</p>
             </div>
           </div>
 
           {/* Preview area for selected photos */}
           {selectedFiles.length > 0 && (
             <div className="mt-5 bg-gray-50 rounded-lg p-4 border border-gray-200">
-              <h3 className="font-medium text-gray-800 mb-3">Selected Photos</h3>
+              <h3 className="font-medium text-gray-800 mb-3">Selected Photo</h3>
               <div className="grid grid-cols-3 gap-3">
                 {selectedFiles.map((file, index) => (
                   <div key={index} className="relative aspect-square bg-white rounded-md overflow-hidden shadow-sm border border-gray-200">
@@ -259,7 +258,7 @@ export default function PhotoUploader() {
                   Clear selection
                 </button>
                 <span className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded-md border border-blue-100">
-                  <span className="font-bold">{selectedFiles.length}</span>/5 images
+                  <span className="font-bold">{selectedFiles.length}</span>/1 photo
                 </span>
               </div>
             </div>
@@ -281,7 +280,7 @@ export default function PhotoUploader() {
                 Uploading...
               </div>
             ) : (
-              "Submit Photos"
+              "Submit Photo"
             )}
           </Button>
         </div>

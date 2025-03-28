@@ -54,6 +54,8 @@ export class MemStorage implements IStorage {
       borderColor: "#ffffff",
       fontFamily: "Arial",
       fontColor: "#ffffff",
+      fontSize: 16,
+      imagePosition: "center",
       updatedAt: new Date()
     };
   }
@@ -178,6 +180,8 @@ export class MemStorage implements IStorage {
         borderColor: "#ffffff",
         fontFamily: "Arial",
         fontColor: "#ffffff",
+        fontSize: 16,
+        imagePosition: "center",
         updatedAt: new Date()
       };
     }

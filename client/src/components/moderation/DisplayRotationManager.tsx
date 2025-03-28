@@ -210,6 +210,26 @@ export default function DisplayRotationManager() {
     );
   }
 
+  // Get display settings to find out the current display configuration
+  const { data: displaySettings } = useQuery<{
+    autoRotate: boolean;
+    slideInterval: number;
+    showInfo: boolean;
+    transitionEffect: string;
+    blacklistWords: string | null;
+    borderStyle: string;
+    borderWidth: number;
+    borderColor: string;
+    fontFamily: string;
+    fontColor: string;
+    fontSize: number;
+    imagePosition: string;
+    backgroundPath: string | null;
+  }>({
+    queryKey: ['/api/display-settings'],
+    refetchInterval: 30000 // Refetch every 30 seconds
+  });
+
   // If no images are found
   if (!displayImages || displayImages.length === 0) {
     return (
@@ -224,20 +244,86 @@ export default function DisplayRotationManager() {
     );
   }
 
+  // Find the currently displayed image
+  const currentlyDisplayedImage = displayImages && displayImages.length > 0 
+    ? displayImages.slice().sort((a, b) => {
+        const orderA = a.displayOrder !== undefined ? a.displayOrder : Number.MAX_SAFE_INTEGER;
+        const orderB = b.displayOrder !== undefined ? b.displayOrder : Number.MAX_SAFE_INTEGER;
+        return orderA - orderB;
+      })[0]
+    : null;
+
   return (
-    <div className="space-y-4 mt-6">
+    <div className="space-y-6 mt-6">
+      {/* Current live display preview */}
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex flex-col md:flex-row gap-6">
+            <div className="w-full md:w-2/3 lg:w-1/2">
+              <h3 className="text-lg font-medium mb-2">Currently Live on Display</h3>
+              {currentlyDisplayedImage ? (
+                <div className="relative bg-slate-50 rounded-lg overflow-hidden border border-gray-200 aspect-video flex items-center justify-center">
+                  <img 
+                    src={currentlyDisplayedImage.originalPath} 
+                    alt="Currently displayed" 
+                    className="object-contain max-h-[300px] max-w-full"
+                  />
+                  {currentlyDisplayedImage.caption && (
+                    <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-60 text-white p-2 text-sm">
+                      <p className="truncate">{currentlyDisplayedImage.caption}</p>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="bg-slate-50 rounded-lg border border-gray-200 aspect-video flex items-center justify-center text-gray-400">
+                  No image currently displayed
+                </div>
+              )}
+              <p className="text-sm text-muted-foreground mt-2">
+                This shows what is currently appearing first on the display. 
+                {displaySettings?.autoRotate 
+                  ? " Display is rotating through all approved photos automatically."
+                  : " Display rotation is currently paused."
+                }
+              </p>
+            </div>
+            <div className="w-full md:w-1/3 lg:w-1/2 flex flex-col justify-center space-y-4">
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="auto-rotate"
+                  checked={!isPaused} 
+                  onCheckedChange={(checked) => setIsPaused(!checked)}
+                />
+                <Label htmlFor="auto-rotate">
+                  {isPaused ? "Rotation Paused" : "Auto Rotate"}
+                </Label>
+              </div>
+              
+              <div className="text-sm">
+                <p>Total photos in rotation: <span className="font-semibold">{displayImages.length}</span></p>
+                <p>Rotation interval: <span className="font-semibold">{displaySettings?.slideInterval || 8} seconds</span></p>
+              </div>
+              
+              <a 
+                href="/display" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 transition-colors text-sm mt-2"
+              >
+                <span>Open display page in new tab</span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                  <polyline points="15 3 21 3 21 9"></polyline>
+                  <line x1="10" y1="14" x2="21" y2="3"></line>
+                </svg>
+              </a>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold">Images in Display Rotation</h2>
-        <div className="flex items-center space-x-2">
-          <Switch
-            id="auto-rotate"
-            checked={!isPaused} 
-            onCheckedChange={(checked) => setIsPaused(!checked)}
-          />
-          <Label htmlFor="auto-rotate">
-            {isPaused ? "Rotation Paused" : "Auto Rotate"}
-          </Label>
-        </div>
       </div>
       
       <p className="text-sm text-muted-foreground">
