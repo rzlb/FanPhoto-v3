@@ -97,22 +97,30 @@ export default function DisplayPage() {
 
   return (
     <div 
-      className="fixed inset-0 flex items-center justify-center"
+      className="fixed inset-0 flex items-center justify-center font-[Arial]"
       style={backgroundStyle}
     >
       {/* Semi-transparent overlay */}
       {settings?.backgroundPath && (
-        <div className="absolute inset-0 bg-black bg-opacity-40"></div>
+        <div className="absolute inset-0 bg-black bg-opacity-60"></div>
       )}
       
+      {/* RWS Logo */}
+      <div className="absolute top-6 left-6 z-10">
+        <img src="/assets/rws-logo.png" alt="RWS Logo" className="h-10 md:h-14" />
+      </div>
+      
       {isLoading ? (
-        <div className="text-white text-xl">Loading presentation...</div>
+        <div className="text-white text-xl glow-text">Loading presentation...</div>
       ) : error ? (
-        <div className="text-red-500 text-xl">
+        <div className="text-red-500 text-xl glow-text">
           Error loading images: {error instanceof Error ? error.message : "Unknown error"}
         </div>
       ) : !images || images.length === 0 ? (
-        <div className="text-white text-xl">No approved images available for display</div>
+        <div className="flex flex-col items-center justify-center h-full w-full">
+          <div className="text-white text-2xl glow-text mb-4">No approved images available</div>
+          <div className="text-gray-300 text-lg">Upload photos by scanning the QR code at the venue</div>
+        </div>
       ) : (
         <>
           <DisplayCarousel 

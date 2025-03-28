@@ -10,17 +10,18 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const [location] = useLocation();
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-app-gradient">
       {/* Navigation */}
-      <nav className="bg-white border-b border-gray-200 fixed w-full z-30">
+      <nav className="bg-zinc-900 border-b border-zinc-800 fixed w-full z-30 shadow-lg">
         <div className="px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex">
               <div className="flex-shrink-0 flex items-center">
-                <span className="text-xl font-bold text-primary">RWS FanPhoto</span>
+                <img src="/assets/rws-logo.png" alt="RWS Logo" className="h-8 mr-3" />
+                <span className="text-xl font-bold text-white glow-text">RWS FanPhoto</span>
               </div>
-              <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
-                <NavLink href="/admin/dashboard" active={location === "/admin/dashboard"}>
+              <div className="hidden sm:ml-8 sm:flex sm:space-x-8">
+                <NavLink href="/admin/dashboard" active={location === "/admin/dashboard" || location === "/admin"}>
                   Dashboard
                 </NavLink>
                 <NavLink href="/admin/moderation" active={location === "/admin/moderation"}>
@@ -32,14 +33,18 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
               </div>
             </div>
             <div className="flex items-center">
-              <button type="button" className="bg-primary p-1 rounded-full text-white hover:text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
-                <svg className="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                </svg>
-              </button>
+              <Link href="/display" target="_blank">
+                <a className="mr-4 text-sm text-blue-400 hover:text-blue-300 flex items-center" target="_blank" rel="noopener noreferrer">
+                  <svg className="h-4 w-4 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                  View Display
+                </a>
+              </Link>
               <div className="ml-3 relative">
                 <div>
-                  <button type="button" className="bg-white rounded-full flex text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" id="user-menu-button">
+                  <button type="button" className="bg-zinc-800 rounded-full flex text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" id="user-menu-button">
                     <span className="sr-only">Open user menu</span>
                     <div className="h-8 w-8 rounded-full bg-primary text-white flex items-center justify-center">
                       <span className="text-sm font-medium">AD</span>

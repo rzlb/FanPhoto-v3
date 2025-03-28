@@ -14,17 +14,26 @@ export default function UploadPage() {
   }, []);
 
   return (
-    <div className="min-h-screen w-full flex flex-col items-center bg-gray-50">
+    <div className="min-h-screen w-full flex flex-col items-center bg-app-gradient font-[Arial]">
       <div className="w-full max-w-lg mx-auto px-4 py-8 flex flex-col items-center">
-        <div className="text-center mb-8">
-          <h1 className="text-2xl font-semibold text-gray-900 mb-2">Share Your {eventName} Photos</h1>
-          <p className="text-gray-500">Upload to RWS FanPhoto and see your images transformed on the big screen!</p>
+        {/* Header with logo */}
+        <div className="flex items-center justify-center mb-6">
+          <img src="/assets/rws-logo.png" alt="RWS Logo" className="h-10 mr-4" />
+          <h1 className="text-2xl font-bold text-white glow-text">RWS FanPhoto</h1>
         </div>
         
-        <PhotoUploader />
+        <div className="text-center mb-8">
+          <h2 className="text-2xl font-semibold text-white mb-3">Share Your {eventName} Photos</h2>
+          <p className="text-gray-300">Upload your photos and see them displayed on the big screen!</p>
+        </div>
         
-        <p className="text-sm text-gray-500 text-center max-w-md mt-4">
-          By uploading, you agree that your photos may be displayed publicly at this event and used for AI transformations.
+        {/* Card container with sleek styling */}
+        <div className="w-full bg-zinc-900/80 rounded-xl shadow-2xl p-6 border border-zinc-800">
+          <PhotoUploader />
+        </div>
+        
+        <p className="text-sm text-gray-400 text-center max-w-md mt-6">
+          By uploading, you agree that your photos may be displayed publicly at this event.
         </p>
       </div>
     </div>

@@ -139,14 +139,21 @@ export default function DisplayCarousel({
           <img
             src={currentImage.originalPath}
             alt={`Photo by ${currentImage.submitterName}`}
-            className="max-w-full max-h-full object-contain rounded-md shadow-xl"
+            className="max-w-full max-h-full object-contain rounded-md shadow-2xl"
+            style={{ boxShadow: '0 4px 30px rgba(0, 0, 0, 0.5)' }}
           />
           
           {showInfo && (
-            <div className="absolute bottom-24 left-6 bg-black/40 text-white px-4 py-2 rounded-lg backdrop-blur-sm">
-              <p className="text-sm md:text-base">By: {currentImage.submitterName || "Anonymous"}</p>
-              <p className="text-xs md:text-sm text-gray-300">
-                {new Date(currentImage.createdAt).toLocaleDateString()}
+            <div className="absolute bottom-28 left-8 bg-black/60 text-white px-6 py-3 rounded-lg backdrop-blur-sm font-[Arial] border border-zinc-700">
+              <p className="text-base md:text-lg font-semibold">
+                By: {currentImage.submitterName || "Anonymous"}
+              </p>
+              <p className="text-xs md:text-sm text-blue-300">
+                {new Date(currentImage.createdAt).toLocaleDateString(undefined, {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric'
+                })}
               </p>
             </div>
           )}
