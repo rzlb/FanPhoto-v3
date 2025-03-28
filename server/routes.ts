@@ -70,14 +70,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const pendingPhotos = await storage.getPendingPhotosCount();
       const approvedPhotos = await storage.getApprovedPhotosCount();
       const rejectedPhotos = await storage.getRejectedPhotosCount();
+      const archivedPhotos = await storage.getArchivedPhotosCount();
       
       res.json({
-        totalUploads: pendingPhotos + approvedPhotos + rejectedPhotos,
+        totalUploads: pendingPhotos + approvedPhotos + rejectedPhotos + archivedPhotos,
         approvedPhotos,
-        pendingApproval: pendingPhotos
+        pendingApproval: pendingPhotos,
+        archived: archivedPhotos
       });
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch stats" });
+    }
+  });
+  
+  // Analytics routes
+  app.get('/api/analytics', async (req: Request, res: Response) => {
+    try {
+      // Parse start and end dates if provided
+      let startDate: Date | undefined;
+      let endDate: Date | undefined;
+      
+      if (req.query.startDate && typeof req.query.startDate === 'string') {
+        startDate = new Date(req.query.startDate);
+      }
+      
+      if (req.query.endDate && typeof req.query.endDate === 'string') {
+        endDate = new Date(req.query.endDate);
+      }
+      
+      const analyticsData = await storage.getAnalytics(startDate, endDate);
+      
+      res.json(analyticsData);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch analytics data" });
+    }
+  });
+  
+  app.get('/api/analytics/daily', async (req: Request, res: Response) => {
+    try {
+      const dailyAnalytics = await storage.getDailyAnalytics();
+      res.json(dailyAnalytics);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch daily analytics" });
     }
   });
 
@@ -126,6 +160,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           caption: req.body.caption || null
         });
         
+        // Track upload in analytics
+        await storage.incrementAnalyticValue('uploads');
+        
         createdPhotos.push(photo);
       }
       
@@ -155,12 +192,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let status;
       if (action === "approve") {
         status = "approved";
+        // Track approval in analytics
+        await storage.incrementAnalyticValue('approved');
       } else if (action === "reject") {
         status = "rejected";
+        // Track rejection in analytics
+        await storage.incrementAnalyticValue('rejected');
       } else if (action === "archive") {
-        status = "archived"; 
+        status = "archived";
+        // Track archiving in analytics
+        await storage.incrementAnalyticValue('archived');
       } else {
         status = "rejected";
+        // Track rejection in analytics as default
+        await storage.incrementAnalyticValue('rejected');
       }
       const updatedPhoto = await storage.updatePhotoStatus(photoId, status);
       
@@ -174,17 +219,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   
   // Generate a QR code based on hostname
-  app.get('/api/qrcode', (req: Request, res: Response) => {
-    const host = req.headers.host || 'localhost:5000';
-    const protocol = req.secure ? 'https' : 'http';
-    const uploadUrl = `${protocol}://${host}/upload`;
-    
-    // We're returning just the URL that can be used with a QR code service
-    // The frontend will handle the actual QR code generation
-    res.json({
-      uploadUrl,
-      qrCodeUrl: `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(uploadUrl)}`
-    });
+  app.get('/api/qrcode', async (req: Request, res: Response) => {
+    try {
+      // Track QR code scan in analytics
+      await storage.incrementAnalyticValue('qrScans');
+      
+      const host = req.headers.host || 'localhost:5000';
+      const protocol = req.secure ? 'https' : 'http';
+      const uploadUrl = `${protocol}://${host}/upload`;
+      
+      // We're returning just the URL that can be used with a QR code service
+      // The frontend will handle the actual QR code generation
+      res.json({
+        uploadUrl,
+        qrCodeUrl: `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(uploadUrl)}`
+      });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to generate QR code" });
+    }
   });
   
   // Get display settings
@@ -276,6 +328,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get approved display images
   app.get('/api/display/images', async (req: Request, res: Response) => {
     try {
+      // Track view in analytics
+      await storage.incrementAnalyticValue('views');
+      
       // Get approved photos directly (excluding archived photos)
       const approvedPhotos = await storage.getPhotos("approved");
       

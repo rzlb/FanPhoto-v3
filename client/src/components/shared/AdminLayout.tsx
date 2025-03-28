@@ -30,6 +30,9 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                 <NavLink href="/admin/display-settings" active={location === "/admin/display-settings"}>
                   Display Settings
                 </NavLink>
+                <NavLink href="/admin/analytics" active={location === "/admin/analytics"}>
+                  Analytics
+                </NavLink>
               </div>
             </div>
             <div className="flex items-center">

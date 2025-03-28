@@ -7,6 +7,7 @@ import UploadPage from "@/pages/upload";
 import DashboardPage from "@/pages/admin/dashboard";
 import ModerationPage from "@/pages/admin/moderation";
 import DisplaySettingsPage from "@/pages/admin/display-settings";
+import AnalyticsPage from "@/pages/admin/analytics";
 import DisplayPage from "@/pages/display";
 
 function Router() {
@@ -22,6 +23,7 @@ function Router() {
       <Route path="/admin/dashboard" component={DashboardPage} />
       <Route path="/admin/moderation" component={ModerationPage} />
       <Route path="/admin/display-settings" component={DisplaySettingsPage} />
+      <Route path="/admin/analytics" component={AnalyticsPage} />
       
       {/* Fallback to 404 */}
       <Route component={NotFound} />

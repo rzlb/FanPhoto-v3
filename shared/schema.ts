@@ -85,6 +85,21 @@ export type InsertPhoto = z.infer<typeof insertPhotoSchema>;
 export type DisplaySettings = typeof displaySettings.$inferSelect;
 export type InsertDisplaySettings = z.infer<typeof insertDisplaySettingsSchema>;
 
+// Analytics tracking
+export const analytics = pgTable("analytics", {
+  id: serial("id").primaryKey(),
+  date: timestamp("date").defaultNow().notNull(),
+  uploads: integer("uploads").notNull().default(0),
+  views: integer("views").notNull().default(0),
+  qrScans: integer("qr_scans").notNull().default(0),
+  approved: integer("approved").notNull().default(0),
+  rejected: integer("rejected").notNull().default(0),
+  archived: integer("archived").notNull().default(0),
+});
+
+export type Analytics = typeof analytics.$inferSelect;
+export type InsertAnalytics = typeof analytics.$inferInsert;
+
 // Additional validation schemas for our application
 export const photoUploadSchema = z.object({
   submitterName: z.string().optional(),

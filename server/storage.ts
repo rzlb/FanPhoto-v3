@@ -1,4 +1,4 @@
-import { Photo, InsertPhoto, User, InsertUser, DisplaySettings, InsertDisplaySettings } from "@shared/schema";
+import { Photo, InsertPhoto, User, InsertUser, DisplaySettings, InsertDisplaySettings, Analytics, InsertAnalytics } from "@shared/schema";
 import * as fs from 'fs/promises';
 import * as path from 'path';
 
@@ -19,26 +19,36 @@ export interface IStorage {
   getPendingPhotosCount(): Promise<number>;
   getApprovedPhotosCount(): Promise<number>;
   getRejectedPhotosCount(): Promise<number>;
+  getArchivedPhotosCount(): Promise<number>;
   
   // Display settings methods
   getDisplaySettings(): Promise<DisplaySettings | undefined>;
   updateDisplaySettings(settings: Partial<DisplaySettings>): Promise<DisplaySettings>;
   uploadBackgroundImage(imagePath: string): Promise<DisplaySettings>;
+  
+  // Analytics methods
+  getAnalytics(startDate?: Date, endDate?: Date): Promise<Analytics[]>;
+  getDailyAnalytics(): Promise<Analytics | undefined>;
+  incrementAnalyticValue(field: 'uploads' | 'views' | 'qrScans' | 'approved' | 'rejected' | 'archived', amount?: number): Promise<void>;
 }
 
 export class MemStorage implements IStorage {
   private users: Map<number, User>;
   private photos: Map<number, Photo>;
   private displaySettings: DisplaySettings | null;
+  private analytics: Map<string, Analytics>;
   private userId: number;
   private photoId: number;
+  private analyticsId: number;
 
   constructor() {
     this.users = new Map();
     this.photos = new Map();
+    this.analytics = new Map();
     this.displaySettings = null;
     this.userId = 1;
     this.photoId = 1;
+    this.analyticsId = 1;
     
     // Initialize with default display settings
     this.displaySettings = {
@@ -209,6 +219,62 @@ export class MemStorage implements IStorage {
 
   async uploadBackgroundImage(imagePath: string): Promise<DisplaySettings> {
     return this.updateDisplaySettings({ backgroundPath: imagePath });
+  }
+  
+  async getArchivedPhotosCount(): Promise<number> {
+    return Array.from(this.photos.values()).filter(photo => photo.status === "archived").length;
+  }
+  
+  // Analytics methods
+  async getAnalytics(startDate?: Date, endDate?: Date): Promise<Analytics[]> {
+    let analytics = Array.from(this.analytics.values());
+    
+    if (startDate) {
+      analytics = analytics.filter(entry => entry.date >= startDate);
+    }
+    
+    if (endDate) {
+      analytics = analytics.filter(entry => entry.date <= endDate);
+    }
+    
+    return analytics.sort((a, b) => a.date.getTime() - b.date.getTime());
+  }
+  
+  async getDailyAnalytics(): Promise<Analytics | undefined> {
+    const today = new Date();
+    const dateKey = `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`;
+    
+    // If we don't have an entry for today, create one
+    if (!this.analytics.has(dateKey)) {
+      const newAnalytics: Analytics = {
+        id: this.analyticsId++,
+        date: today,
+        uploads: 0,
+        views: 0,
+        qrScans: 0,
+        approved: 0,
+        rejected: 0,
+        archived: 0
+      };
+      this.analytics.set(dateKey, newAnalytics);
+    }
+    
+    return this.analytics.get(dateKey);
+  }
+  
+  async incrementAnalyticValue(field: 'uploads' | 'views' | 'qrScans' | 'approved' | 'rejected' | 'archived', amount: number = 1): Promise<void> {
+    const analytics = await this.getDailyAnalytics();
+    if (!analytics) return;
+    
+    const dateKey = `${analytics.date.getFullYear()}-${analytics.date.getMonth() + 1}-${analytics.date.getDate()}`;
+    
+    // Update the value
+    const updatedAnalytics = { 
+      ...analytics,
+      [field]: analytics[field] + amount
+    };
+    
+    this.analytics.set(dateKey, updatedAnalytics);
   }
 }
 
