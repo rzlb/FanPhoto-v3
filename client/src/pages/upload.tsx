@@ -14,25 +14,25 @@ export default function UploadPage() {
   }, []);
 
   return (
-    <div className="min-h-screen w-full flex flex-col items-center bg-app-gradient font-[Arial]">
+    <div className="min-h-screen w-full flex flex-col items-center bg-white font-[Arial]">
       <div className="w-full max-w-lg mx-auto px-4 py-8 flex flex-col items-center">
         {/* Header with logo */}
         <div className="flex items-center justify-center mb-6">
           <img src="/assets/rws-logo-dark.png" alt="RWS Logo" className="h-10 mr-4" />
-          <h1 className="text-2xl font-bold text-white glow-text">FanPhoto</h1>
+          <h1 className="text-2xl font-bold text-gray-800">FanPhoto</h1>
         </div>
         
         <div className="text-center mb-8">
-          <h2 className="text-2xl font-semibold text-white mb-3">Share Your {eventName} Photos</h2>
-          <p className="text-gray-300">Upload your photos and see them displayed on the big screen!</p>
+          <h2 className="text-2xl font-semibold text-gray-800 mb-3">Share Your {eventName} Photos</h2>
+          <p className="text-gray-600">Upload your photos and see them displayed on the big screen!</p>
         </div>
         
-        {/* Card container with sleek styling */}
-        <div className="w-full bg-zinc-900/80 rounded-xl shadow-2xl p-6 border border-zinc-800">
+        {/* Card container with light styling */}
+        <div className="w-full bg-white rounded-xl shadow-lg p-6 border border-gray-200">
           <PhotoUploader />
         </div>
         
-        <p className="text-sm text-gray-400 text-center max-w-md mt-6">
+        <p className="text-sm text-gray-500 text-center max-w-md mt-6">
           By uploading, you agree that your photos may be displayed publicly at this event.
         </p>
       </div>

@@ -152,11 +152,11 @@ export default function PhotoUploader() {
             name="submitterName"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-gray-100 font-medium">Your Name (Optional)</FormLabel>
+                <FormLabel className="text-gray-800 font-medium">Your Name (Optional)</FormLabel>
                 <FormControl>
                   <Input
                     placeholder="Enter your name"
-                    className="mt-1 block w-full rounded-md bg-zinc-800 border-zinc-700 text-white shadow-sm p-2 border focus:border-blue-500 focus:ring-blue-500"
+                    className="mt-1 block w-full rounded-md bg-white border-gray-300 text-gray-800 shadow-sm p-2 border focus:border-blue-500 focus:ring-blue-500"
                     {...field}
                   />
                 </FormControl>
@@ -169,12 +169,12 @@ export default function PhotoUploader() {
             name="caption"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-gray-100 font-medium">Caption (Optional)</FormLabel>
+                <FormLabel className="text-gray-800 font-medium">Caption (Optional)</FormLabel>
                 <FormControl>
                   <div className="relative">
                     <textarea
                       placeholder="Add a caption to your photo (max 200 characters)"
-                      className="mt-1 block w-full rounded-md bg-zinc-800 border-zinc-700 text-white shadow-sm p-2 border focus:border-blue-500 focus:ring-blue-500 min-h-[80px]"
+                      className="mt-1 block w-full rounded-md bg-white border-gray-300 text-gray-800 shadow-sm p-2 border focus:border-blue-500 focus:ring-blue-500 min-h-[80px]"
                       maxLength={200}
                       onChange={(e) => {
                         field.onChange(e);
@@ -182,7 +182,7 @@ export default function PhotoUploader() {
                       }}
                       value={field.value || ""}
                     />
-                    <div className="absolute bottom-2 right-2 text-xs text-gray-400">
+                    <div className="absolute bottom-2 right-2 text-xs text-gray-500">
                       {captionLength}/200
                     </div>
                   </div>
@@ -192,18 +192,18 @@ export default function PhotoUploader() {
           />
 
           <div
-            className="border-2 border-dashed border-zinc-700 rounded-lg p-8 text-center hover:border-blue-500 transition-colors cursor-pointer bg-zinc-800/50"
+            className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-500 transition-colors cursor-pointer bg-gray-50"
             onClick={() => fileInputRef.current?.click()}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
           >
             <div className="mx-auto flex flex-col items-center">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-blue-400 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-blue-500 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6.996 6 6 6H4a2 2 0 00-2 2v2a2 2 0 002 2h16a2 2 0 002-2V8a2 2 0 00-2-2h-3.5V6a1 1 0 10-2 0v.5h-3.5V6a1 1 0 10-2 0v.5h-1.996l-1-1z" />
               </svg>
-              <p className="text-sm text-gray-300 mb-1">Drag & drop your photos here</p>
-              <p className="text-xs text-gray-400">or</p>
+              <p className="text-sm text-gray-600 mb-1">Drag & drop your photos here</p>
+              <p className="text-xs text-gray-500">or</p>
               <Button
                 type="button"
                 className="mt-3 px-5 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-all duration-200 text-sm font-medium hover:scale-105"
@@ -219,17 +219,17 @@ export default function PhotoUploader() {
                 multiple
                 onChange={handleFileInput}
               />
-              <p className="text-xs text-gray-400 mt-3">Maximum 5 photos (JPG, PNG)</p>
+              <p className="text-xs text-gray-500 mt-3">Maximum 5 photos (JPG, PNG)</p>
             </div>
           </div>
 
           {/* Preview area for selected photos */}
           {selectedFiles.length > 0 && (
-            <div className="mt-5 bg-zinc-800/50 rounded-lg p-4 border border-zinc-700">
-              <h3 className="font-medium text-gray-200 mb-3">Selected Photos</h3>
+            <div className="mt-5 bg-gray-50 rounded-lg p-4 border border-gray-200">
+              <h3 className="font-medium text-gray-800 mb-3">Selected Photos</h3>
               <div className="grid grid-cols-3 gap-3">
                 {selectedFiles.map((file, index) => (
-                  <div key={index} className="relative aspect-square bg-zinc-900 rounded-md overflow-hidden shadow-inner">
+                  <div key={index} className="relative aspect-square bg-white rounded-md overflow-hidden shadow-sm border border-gray-200">
                     <img
                       src={URL.createObjectURL(file)}
                       className="w-full h-full object-cover"
@@ -237,7 +237,7 @@ export default function PhotoUploader() {
                     />
                     <button
                       type="button"
-                      className="absolute top-1 right-1 bg-black bg-opacity-60 rounded-full p-1.5 text-white hover:bg-opacity-80 transition-all duration-200"
+                      className="absolute top-1 right-1 bg-white bg-opacity-80 rounded-full p-1.5 text-gray-700 hover:bg-opacity-100 transition-all duration-200 shadow-sm"
                       onClick={(e) => {
                         e.stopPropagation();
                         removeFile(index);
@@ -253,12 +253,12 @@ export default function PhotoUploader() {
               <div className="flex justify-between items-center mt-4">
                 <button
                   type="button"
-                  className="text-sm text-gray-400 hover:text-gray-200 transition-colors"
+                  className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
                   onClick={clearSelection}
                 >
                   Clear selection
                 </button>
-                <span className="text-xs text-blue-400 bg-zinc-900 px-2 py-1 rounded-md">
+                <span className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded-md border border-blue-100">
                   <span className="font-bold">{selectedFiles.length}</span>/5 images
                 </span>
               </div>
