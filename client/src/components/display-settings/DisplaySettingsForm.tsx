@@ -22,6 +22,11 @@ const formSchema = z.object({
   showInfo: z.boolean(),
   transitionEffect: z.enum(["slide", "fade", "zoom", "flip"]),
   blacklistWords: z.string().optional(),
+  borderStyle: z.enum(["none", "solid", "dashed", "dotted", "double"]),
+  borderWidth: z.number().min(0).max(20),
+  borderColor: z.string(),
+  fontFamily: z.enum(["Arial", "Helvetica", "Verdana", "Georgia", "Times New Roman", "Courier New"]),
+  fontColor: z.string(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -32,7 +37,19 @@ export default function DisplaySettingsForm() {
   const queryClient = useQueryClient();
   
   // Fetch current settings
-  const { data: settings, isLoading } = useQuery({
+  const { data: settings, isLoading } = useQuery<{
+    autoRotate: boolean;
+    slideInterval: number;
+    showInfo: boolean; 
+    transitionEffect: string;
+    blacklistWords: string | null;
+    borderStyle: string;
+    borderWidth: number;
+    borderColor: string;
+    fontFamily: string;
+    fontColor: string;
+    backgroundPath: string | null;
+  }>({
     queryKey: ['/api/display-settings'],
   });
 
@@ -45,6 +62,11 @@ export default function DisplaySettingsForm() {
       showInfo: true, 
       transitionEffect: "slide",
       blacklistWords: "",
+      borderStyle: "none",
+      borderWidth: 0,
+      borderColor: "#ffffff",
+      fontFamily: "Arial",
+      fontColor: "#ffffff",
     },
     values: settings ? {
       autoRotate: settings.autoRotate,
@@ -52,6 +74,11 @@ export default function DisplaySettingsForm() {
       showInfo: settings.showInfo,
       transitionEffect: settings.transitionEffect as "slide" | "fade" | "zoom" | "flip",
       blacklistWords: settings.blacklistWords || "",
+      borderStyle: settings.borderStyle as "none" | "solid" | "dashed" | "dotted" | "double" || "none",
+      borderWidth: settings.borderWidth || 0,
+      borderColor: settings.borderColor || "#ffffff",
+      fontFamily: settings.fontFamily as "Arial" | "Helvetica" | "Verdana" | "Georgia" | "Times New Roman" | "Courier New" || "Arial",
+      fontColor: settings.fontColor || "#ffffff",
     } : undefined,
   });
   
@@ -329,6 +356,193 @@ export default function DisplaySettingsForm() {
                 </FormItem>
               )}
             />
+            
+            <div className="border-t border-gray-200 pt-6 mt-6">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Photo Appearance</h3>
+              
+              {/* Border style */}
+              <FormField
+                control={form.control}
+                name="borderStyle"
+                render={({ field }) => (
+                  <FormItem className="mb-4">
+                    <FormLabel className="font-medium text-gray-900">
+                      Border Style
+                    </FormLabel>
+                    <Select 
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                      value={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger className="w-full mt-1">
+                          <SelectValue placeholder="Select border style" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="none">None</SelectItem>
+                        <SelectItem value="solid">Solid</SelectItem>
+                        <SelectItem value="dashed">Dashed</SelectItem>
+                        <SelectItem value="dotted">Dotted</SelectItem>
+                        <SelectItem value="double">Double</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </FormItem>
+                )}
+              />
+              
+              {/* Border width */}
+              <FormField
+                control={form.control}
+                name="borderWidth"
+                render={({ field }) => (
+                  <FormItem className="mb-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <FormLabel className="font-medium text-gray-900">
+                        Border Width
+                      </FormLabel>
+                      <span className="text-sm text-gray-500">{field.value}px</span>
+                    </div>
+                    <FormControl>
+                      <Slider
+                        value={[field.value]}
+                        max={20}
+                        min={0}
+                        step={1}
+                        onValueChange={(values) => field.onChange(values[0])}
+                        className="w-full"
+                        disabled={form.getValues().borderStyle === "none"}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              
+              {/* Border color */}
+              <FormField
+                control={form.control}
+                name="borderColor"
+                render={({ field }) => (
+                  <FormItem className="mb-4">
+                    <FormLabel className="font-medium text-gray-900">
+                      Border Color
+                    </FormLabel>
+                    <div className="flex items-center gap-2 mt-1">
+                      <div 
+                        className="w-8 h-8 rounded-md border border-gray-300" 
+                        style={{ backgroundColor: field.value }}
+                      />
+                      <FormControl>
+                        <Input
+                          type="color"
+                          className="w-12 h-8 p-0 border-0"
+                          value={field.value}
+                          onChange={field.onChange}
+                          disabled={form.getValues().borderStyle === "none"}
+                        />
+                      </FormControl>
+                      <Input
+                        className="flex-1"
+                        value={field.value}
+                        onChange={field.onChange}
+                        disabled={form.getValues().borderStyle === "none"}
+                      />
+                    </div>
+                  </FormItem>
+                )}
+              />
+            </div>
+            
+            <div className="border-t border-gray-200 pt-6 mt-6">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Text Appearance</h3>
+              
+              {/* Font family */}
+              <FormField
+                control={form.control}
+                name="fontFamily"
+                render={({ field }) => (
+                  <FormItem className="mb-4">
+                    <FormLabel className="font-medium text-gray-900">
+                      Font Family
+                    </FormLabel>
+                    <Select 
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                      value={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger className="w-full mt-1">
+                          <SelectValue placeholder="Select font family" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="Arial">Arial</SelectItem>
+                        <SelectItem value="Helvetica">Helvetica</SelectItem>
+                        <SelectItem value="Verdana">Verdana</SelectItem>
+                        <SelectItem value="Georgia">Georgia</SelectItem>
+                        <SelectItem value="Times New Roman">Times New Roman</SelectItem>
+                        <SelectItem value="Courier New">Courier New</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </FormItem>
+                )}
+              />
+              
+              {/* Font color */}
+              <FormField
+                control={form.control}
+                name="fontColor"
+                render={({ field }) => (
+                  <FormItem className="mb-4">
+                    <FormLabel className="font-medium text-gray-900">
+                      Font Color
+                    </FormLabel>
+                    <div className="flex items-center gap-2 mt-1">
+                      <div 
+                        className="w-8 h-8 rounded-md border border-gray-300" 
+                        style={{ backgroundColor: field.value }}
+                      />
+                      <FormControl>
+                        <Input
+                          type="color"
+                          className="w-12 h-8 p-0 border-0"
+                          value={field.value}
+                          onChange={field.onChange}
+                        />
+                      </FormControl>
+                      <Input
+                        className="flex-1"
+                        value={field.value}
+                        onChange={field.onChange}
+                      />
+                    </div>
+                  </FormItem>
+                )}
+              />
+              
+              {/* Preview */}
+              <div className="mt-4 p-4 rounded-md bg-gray-100">
+                <h4 className="text-sm font-medium text-gray-700 mb-2">Preview:</h4>
+                <div 
+                  className="p-4 bg-black rounded-md text-center"
+                  style={{ 
+                    borderStyle: form.getValues().borderStyle === "none" ? undefined : form.getValues().borderStyle,
+                    borderWidth: form.getValues().borderStyle === "none" ? 0 : `${form.getValues().borderWidth}px`,
+                    borderColor: form.getValues().borderColor
+                  }}
+                >
+                  <div 
+                    className="text-lg font-medium"
+                    style={{ 
+                      fontFamily: form.getValues().fontFamily,
+                      color: form.getValues().fontColor 
+                    }}
+                  >
+                    Sample Photo Caption
+                  </div>
+                </div>
+              </div>
+            </div>
             
             {/* Save button */}
             <div className="flex justify-end">

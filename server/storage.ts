@@ -47,6 +47,11 @@ export class MemStorage implements IStorage {
       showInfo: true,
       transitionEffect: "slide",
       blacklistWords: null,
+      borderStyle: "none",
+      borderWidth: 0,
+      borderColor: "#ffffff",
+      fontFamily: "Arial",
+      fontColor: "#ffffff",
       updatedAt: new Date()
     };
   }
@@ -88,6 +93,8 @@ export class MemStorage implements IStorage {
       ...insertPhoto, 
       id, 
       status: "pending",
+      caption: insertPhoto.caption || null,
+      submitterName: insertPhoto.submitterName || null,
       createdAt: new Date()
     };
     this.photos.set(id, photo);
@@ -105,7 +112,10 @@ export class MemStorage implements IStorage {
 
   async getRecentPhotos(limit: number): Promise<Photo[]> {
     return Array.from(this.photos.values())
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+      .sort((a, b) => {
+        if (!a.createdAt || !b.createdAt) return 0;
+        return b.createdAt.getTime() - a.createdAt.getTime();
+      })
       .slice(0, limit);
   }
 
@@ -136,6 +146,11 @@ export class MemStorage implements IStorage {
         showInfo: true,
         transitionEffect: "slide",
         blacklistWords: null,
+        borderStyle: "none",
+        borderWidth: 0,
+        borderColor: "#ffffff",
+        fontFamily: "Arial",
+        fontColor: "#ffffff",
         updatedAt: new Date()
       };
     }

@@ -120,7 +120,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       for (const file of files) {
         const photo = await storage.createPhoto({
           originalPath: `/uploads/original/${file.filename}`,
-          submitterName: req.body.submitterName || "Anonymous"
+          submitterName: req.body.submitterName || "Anonymous",
+          caption: req.body.caption || null
         });
         
         createdPhotos.push(photo);
@@ -229,6 +230,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         id: photo.id,
         originalPath: photo.originalPath,
         submitterName: photo.submitterName || "Anonymous",
+        caption: photo.caption,
         createdAt: photo.createdAt
       }));
       

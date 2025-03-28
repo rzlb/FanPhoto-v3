@@ -11,6 +11,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/
 // Define form schema
 const formSchema = z.object({
   submitterName: z.string().optional(),
+  caption: z.string().max(200, "Caption must be 200 characters or less").optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -18,6 +19,7 @@ type FormValues = z.infer<typeof formSchema>;
 export default function PhotoUploader() {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [captionLength, setCaptionLength] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -26,6 +28,7 @@ export default function PhotoUploader() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       submitterName: "",
+      caption: "",
     },
   });
 
@@ -105,6 +108,10 @@ export default function PhotoUploader() {
       if (data.submitterName) {
         formData.append("submitterName", data.submitterName);
       }
+      
+      if (data.caption) {
+        formData.append("caption", data.caption);
+      }
 
       const response = await fetch("/api/photos/upload", {
         method: "POST",
@@ -152,6 +159,33 @@ export default function PhotoUploader() {
                     className="mt-1 block w-full rounded-md bg-zinc-800 border-zinc-700 text-white shadow-sm p-2 border focus:border-blue-500 focus:ring-blue-500"
                     {...field}
                   />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+          
+          <FormField
+            control={form.control}
+            name="caption"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-gray-100 font-medium">Caption (Optional)</FormLabel>
+                <FormControl>
+                  <div className="relative">
+                    <textarea
+                      placeholder="Add a caption to your photo (max 200 characters)"
+                      className="mt-1 block w-full rounded-md bg-zinc-800 border-zinc-700 text-white shadow-sm p-2 border focus:border-blue-500 focus:ring-blue-500 min-h-[80px]"
+                      maxLength={200}
+                      onChange={(e) => {
+                        field.onChange(e);
+                        setCaptionLength(e.target.value.length);
+                      }}
+                      value={field.value || ""}
+                    />
+                    <div className="absolute bottom-2 right-2 text-xs text-gray-400">
+                      {captionLength}/200
+                    </div>
+                  </div>
                 </FormControl>
               </FormItem>
             )}

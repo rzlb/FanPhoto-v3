@@ -5,6 +5,7 @@ interface DisplayImage {
   id: number;
   originalPath: string;
   submitterName: string;
+  caption?: string;
   createdAt: string;
 }
 
@@ -13,13 +14,23 @@ interface DisplayCarouselProps {
   currentIndex: number;
   showInfo: boolean;
   transitionEffect: string;
+  borderStyle?: string;
+  borderWidth?: number;
+  borderColor?: string;
+  fontFamily?: string;
+  fontColor?: string;
 }
 
 export default function DisplayCarousel({ 
   images, 
   currentIndex, 
   showInfo = true,
-  transitionEffect = "slide" 
+  transitionEffect = "slide",
+  borderStyle = "none",
+  borderWidth = 0,
+  borderColor = "#ffffff",
+  fontFamily = "Arial",
+  fontColor = "#ffffff"
 }: DisplayCarouselProps) {
   const [direction, setDirection] = useState(0);
   const [previousIndex, setPreviousIndex] = useState(0);
@@ -136,19 +147,55 @@ export default function DisplayCarousel({
           transition={transition}
           className="w-full h-full flex items-center justify-center p-4 md:p-8 lg:p-12"
         >
-          <img
-            src={currentImage.originalPath}
-            alt={`Photo by ${currentImage.submitterName}`}
-            className="max-w-full max-h-full object-contain rounded-md shadow-2xl"
-            style={{ boxShadow: '0 4px 30px rgba(0, 0, 0, 0.5)' }}
-          />
+          <div
+            className="relative rounded-md"
+            style={{ 
+              borderStyle: borderStyle === "none" ? undefined : borderStyle,
+              borderWidth: borderStyle === "none" ? 0 : `${borderWidth}px`,
+              borderColor: borderColor,
+              maxHeight: "80vh",
+              maxWidth: "80vw",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center"
+            }}
+          >
+            <img
+              src={currentImage.originalPath}
+              alt={`Photo by ${currentImage.submitterName}`}
+              className="max-w-full max-h-full object-contain rounded-t-md shadow-2xl"
+              style={{ 
+                boxShadow: '0 4px 30px rgba(0, 0, 0, 0.5)',
+                maxHeight: currentImage.caption ? "calc(80vh - 70px)" : "80vh"
+              }}
+            />
+            
+            {/* Caption display - only show if caption exists */}
+            {currentImage.caption && (
+              <div 
+                className="w-full bg-black/80 p-4 text-center rounded-b-md"
+                style={{
+                  fontFamily: fontFamily,
+                  color: fontColor,
+                }}
+              >
+                <p className="text-lg md:text-xl">{currentImage.caption}</p>
+              </div>
+            )}
+          </div>
           
           {showInfo && (
-            <div className="absolute bottom-28 left-8 bg-black/60 text-white px-6 py-3 rounded-lg backdrop-blur-sm font-[Arial] border border-zinc-700">
+            <div 
+              className="absolute bottom-28 left-8 bg-black/60 px-6 py-3 rounded-lg backdrop-blur-sm border border-zinc-700"
+              style={{
+                fontFamily: fontFamily,
+                color: fontColor,
+              }}
+            >
               <p className="text-base md:text-lg font-semibold">
                 By: {currentImage.submitterName || "Anonymous"}
               </p>
-              <p className="text-xs md:text-sm text-blue-300">
+              <p className="text-xs md:text-sm opacity-80">
                 {new Date(currentImage.createdAt).toLocaleDateString(undefined, {
                   year: 'numeric',
                   month: 'long',

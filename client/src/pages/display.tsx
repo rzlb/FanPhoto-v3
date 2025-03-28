@@ -7,6 +7,7 @@ interface DisplayImage {
   id: number;
   originalPath: string;
   submitterName: string;
+  caption?: string;
   createdAt: string;
 }
 
@@ -18,6 +19,11 @@ interface DisplaySettings {
   showInfo: boolean;
   transitionEffect: string;
   blacklistWords: string | null;
+  borderStyle: string;
+  borderWidth: number;
+  borderColor: string;
+  fontFamily: string;
+  fontColor: string;
   updatedAt: string;
 }
 
@@ -128,6 +134,11 @@ export default function DisplayPage() {
             currentIndex={currentIndex}
             showInfo={settings?.showInfo ?? true}
             transitionEffect={settings?.transitionEffect ?? "slide"}
+            borderStyle={settings?.borderStyle ?? "none"}
+            borderWidth={settings?.borderWidth ?? 0}
+            borderColor={settings?.borderColor ?? "#ffffff"}
+            fontFamily={settings?.fontFamily ?? "Arial"}
+            fontColor={settings?.fontColor ?? "#ffffff"}
           />
           
           <DisplayControls 
