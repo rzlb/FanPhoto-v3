@@ -7,11 +7,53 @@ import fs from "fs";
 import { 
   photoUploadSchema, 
   moderationActionSchema,
-  displaySettingsSchema,
+  displaySettingsSchema as originalDisplaySettingsSchema,
   reorderPhotosSchema,
-  photoDisplayOrderSchema
+  photoDisplayOrderSchema,
+  Event
 } from "@shared/schema";
 import { z } from "zod";
+import cors from "cors";
+import express from 'express';
+
+// Override the display settings schema to explicitly include text-only
+const displaySettingsSchema = z.object({
+  backgroundPath: z.string().optional(),
+  logoPath: z.string().optional(),
+  displayFormat: z.string().default("16:9-default"),
+  autoRotate: z.boolean().default(true),
+  slideInterval: z.number().min(1).max(60).default(8),
+  showInfo: z.boolean().default(true),
+  showCaptions: z.boolean().default(true),
+  separateCaptions: z.boolean().default(false),
+  transitionEffect: z.enum(["fade", "slide", "zoom", "flip"]).default("slide"),
+  blacklistWords: z.string().optional(),
+  borderStyle: z.enum(["none", "solid", "dashed", "dotted", "double"]).default("none"),
+  borderWidth: z.number().min(0).max(20).default(0),
+  borderColor: z.string().default("#ffffff"),
+  fontFamily: z.enum(["Arial", "Helvetica", "Verdana", "Georgia", "Times New Roman", "Courier New"]).default("Arial"),
+  fontColor: z.string().default("#ffffff"),
+  fontSize: z.number().min(8).max(72).default(16),
+  imagePosition: z.enum(["center", "top", "bottom", "left", "right"]).default("center"),
+  captionBgColor: z.string().default("rgba(0,0,0,0.5)"),
+  captionFontFamily: z.enum(["Arial", "Helvetica", "Verdana", "Georgia", "Times New Roman", "Courier New"]).default("Arial"),
+  captionFontColor: z.string().default("#ffffff"),
+  captionFontSize: z.number().min(8).max(72).default(14),
+  textPosition: z.enum([
+    "overlay-bottom", 
+    "overlay-top", 
+    "below-image", 
+    "above-image", 
+    "left-of-image", 
+    "right-of-image"
+  ]).default("overlay-bottom"),
+  textAlignment: z.enum(["left", "center", "right"]).default("center"),
+  textPadding: z.number().min(0).max(50).default(10),
+  textMaxWidth: z.enum(["full", "3/4", "1/2", "1/3"]).default("full"),
+  textBackground: z.boolean().default(true),
+  textBackgroundColor: z.string().default("#000000"),
+  textBackgroundOpacity: z.number().min(0).max(100).default(50),
+});
 
 // Setup upload directories
 const UPLOAD_DIR = path.join(process.cwd(), "uploads");
@@ -52,17 +94,159 @@ const upload = multer({
   }
 });
 
+// Function to generate a slug from a name
+function generateSlug(name: string): string {
+  return name
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, '')
+    .replace(/[\s_-]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Allow CORS for development
-  app.use((req, res, next) => {
-    res.header('Access-Control-Allow-Origin', '*');
-    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
-    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    next();
-  });
+  app.use(cors());
+  
+  // Parse JSON and URL-encoded bodies
+  app.use(express.json());
+  app.use(express.urlencoded({ extended: true }));
 
   // Serve uploaded files
   app.use('/uploads', express.static(UPLOAD_DIR));
+  
+  // Handle OPTIONS requests
+  app.options('*', (req, res) => {
+    res.status(200).end();
+  });
+  
+  // Event routes
+  // Get all events
+  app.get('/events', async (req: Request, res: Response) => {
+    try {
+      // For now, just return an empty array as we don't have an event storage yet
+      // const events = await storage.getEvents();
+      const events: Event[] = []; // Mock empty list of events
+      res.json(events);
+    } catch (error) {
+      console.error("Error fetching events:", error);
+      res.status(500).json({ error: "Failed to fetch events" });
+    }
+  });
+  
+  // Get event by ID
+  app.get('/events/:id', async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid event ID" });
+      }
+      
+      // Mock event for now
+      const event: Event = {
+        id,
+        name: `Event ${id}`,
+        slug: `event-${id}`,
+        description: "Mock event description",
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      
+      res.json(event);
+    } catch (error) {
+      console.error("Error fetching event:", error);
+      res.status(500).json({ error: "Failed to fetch event" });
+    }
+  });
+  
+  // Get event by slug
+  app.get('/events/slug/:slug', async (req: Request, res: Response) => {
+    try {
+      const slug = req.params.slug;
+      
+      // Mock event for now
+      const event: Event = {
+        id: 1,
+        name: `Event for ${slug}`,
+        slug,
+        description: "Mock event description",
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      
+      res.json(event);
+    } catch (error) {
+      console.error("Error fetching event by slug:", error);
+      res.status(500).json({ error: "Failed to fetch event" });
+    }
+  });
+  
+  // Create event
+  app.post('/events', async (req: Request, res: Response) => {
+    try {
+      const eventData = req.body;
+      
+      // Generate slug if not provided
+      if (!eventData.slug && eventData.name) {
+        eventData.slug = generateSlug(eventData.name);
+      }
+      
+      // Mock created event
+      const event: Event = {
+        id: Date.now(), // Use timestamp as mock ID
+        ...eventData,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      
+      res.status(201).json(event);
+    } catch (error) {
+      console.error("Error creating event:", error);
+      res.status(500).json({ error: "Failed to create event" });
+    }
+  });
+  
+  // Update event
+  app.put('/events/:id', async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid event ID" });
+      }
+      
+      const eventData = req.body;
+      
+      // Mock updated event
+      const event: Event = {
+        id,
+        ...eventData,
+        updatedAt: new Date()
+      };
+      
+      res.json(event);
+    } catch (error) {
+      console.error("Error updating event:", error);
+      res.status(500).json({ error: "Failed to update event" });
+    }
+  });
+  
+  // Delete event
+  app.delete('/events/:id', async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid event ID" });
+      }
+      
+      // Mock successful deletion
+      res.status(204).end();
+    } catch (error) {
+      console.error("Error deleting event:", error);
+      res.status(500).json({ error: "Failed to delete event" });
+    }
+  });
 
   // API Routes
   app.get('/api/stats', async (req: Request, res: Response) => {
@@ -80,6 +264,128 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch stats" });
+    }
+  });
+  
+  // API event routes
+  app.get('/api/events', async (req: Request, res: Response) => {
+    try {
+      console.log("GET /api/events called");
+      const events = await storage.getEvents();
+      console.log("Events from storage:", events);
+      
+      // If no events found, return a default one
+      if (!events || events.length === 0) {
+        console.log("No events found, returning default event");
+        const defaultEvent: any = {
+          id: 1,
+          name: "Default Event",
+          slug: "default-event",
+          description: "This is a default event created by the system",
+          startDate: new Date(),
+          endDate: null,
+          isActive: true,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          category: "other"
+        };
+        
+        console.log("Sending default event:", [defaultEvent]);
+        return res.json([defaultEvent]);
+      } else {
+        console.log("Sending events:", events);
+        return res.json(events);
+      }
+    } catch (error) {
+      console.error("Error fetching events:", error);
+      res.status(500).json({ error: "Failed to fetch events" });
+    }
+  });
+  
+  app.get('/api/events/:id', async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid event ID" });
+      }
+      
+      const event = await storage.getEvent(id);
+      if (!event) {
+        return res.status(404).json({ error: "Event not found" });
+      }
+      
+      res.json(event);
+    } catch (error) {
+      console.error("Error fetching event:", error);
+      res.status(500).json({ error: "Failed to fetch event" });
+    }
+  });
+  
+  app.get('/api/events/slug/:slug', async (req: Request, res: Response) => {
+    try {
+      const slug = req.params.slug;
+      
+      const event = await storage.getEventBySlug(slug);
+      if (!event) {
+        return res.status(404).json({ error: "Event not found" });
+      }
+      
+      res.json(event);
+    } catch (error) {
+      console.error("Error fetching event by slug:", error);
+      res.status(500).json({ error: "Failed to fetch event" });
+    }
+  });
+  
+  app.post('/api/events', async (req: Request, res: Response) => {
+    try {
+      const eventData = req.body;
+      
+      const event = await storage.createEvent(eventData);
+      res.status(201).json(event);
+    } catch (error) {
+      console.error("Error creating event:", error);
+      res.status(500).json({ error: "Failed to create event" });
+    }
+  });
+  
+  app.put('/api/events/:id', async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid event ID" });
+      }
+      
+      const eventData = req.body;
+      
+      const event = await storage.updateEvent(id, eventData);
+      if (!event) {
+        return res.status(404).json({ error: "Event not found" });
+      }
+      
+      res.json(event);
+    } catch (error) {
+      console.error("Error updating event:", error);
+      res.status(500).json({ error: "Failed to update event" });
+    }
+  });
+  
+  app.delete('/api/events/:id', async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid event ID" });
+      }
+      
+      const success = await storage.deleteEvent(id);
+      if (!success) {
+        return res.status(404).json({ error: "Event not found" });
+      }
+      
+      res.status(204).end();
+    } catch (error) {
+      console.error("Error deleting event:", error);
+      res.status(500).json({ error: "Failed to delete event" });
     }
   });
   
@@ -119,7 +425,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/photos/recent', async (req: Request, res: Response) => {
     try {
       const limit = Number(req.query.limit) || 6;
-      const photos = await storage.getRecentPhotos(limit);
+      // If eventId is provided, use it, otherwise get recent photos across all events
+      const eventId = req.query.eventId ? Number(req.query.eventId) : undefined;
+      
+      // Use the default event ID (1) if no eventId is provided
+      const photos = await storage.getRecentPhotos(eventId || 1, limit);
       res.json(photos);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch recent photos" });
@@ -130,7 +440,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/photos', async (req: Request, res: Response) => {
     try {
       const status = req.query.status as string | undefined;
-      const photos = await storage.getPhotos(status);
+      const eventId = req.query.eventId ? Number(req.query.eventId) : undefined;
+      
+      // Use the default event ID (1) if no eventId is provided
+      const photos = await storage.getPhotos(eventId || 1, status);
       res.json(photos);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch photos" });
@@ -155,13 +468,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       for (const file of files) {
         const photo = await storage.createPhoto({
+          eventId: 1, // Use the default event ID
           originalPath: `/uploads/original/${file.filename}`,
           submitterName: req.body.submitterName || "Anonymous",
           caption: req.body.caption || null
         });
         
         // Track upload in analytics
-        await storage.incrementAnalyticValue('uploads');
+        await storage.incrementAnalyticValue('uploads', 1, 1);
         
         createdPhotos.push(photo);
       }
@@ -193,43 +507,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (action === "approve") {
         status = "approved";
         // Track approval in analytics
-        await storage.incrementAnalyticValue('approved');
+        await storage.incrementAnalyticValue('approved', 1, 1);
       } else if (action === "reject") {
         status = "rejected";
         // Track rejection in analytics
-        await storage.incrementAnalyticValue('rejected');
+        await storage.incrementAnalyticValue('rejected', 1, 1);
       } else if (action === "archive") {
         status = "archived";
         // Track archiving in analytics
-        await storage.incrementAnalyticValue('archived');
+        await storage.incrementAnalyticValue('archived', 1, 1);
       } else {
         status = "rejected";
         // Track rejection in analytics as default
-        await storage.incrementAnalyticValue('rejected');
+        await storage.incrementAnalyticValue('rejected', 1, 1);
       }
+      
       const updatedPhoto = await storage.updatePhotoStatus(photoId, status);
       
       res.json(updatedPhoto);
     } catch (error) {
-      console.error("Moderation error:", error);
       res.status(500).json({ error: "Failed to moderate photo" });
     }
   });
   
-
-  
-  // Generate a QR code based on hostname
+  // Get QR code for upload page
   app.get('/api/qrcode', async (req: Request, res: Response) => {
     try {
-      // Track QR code scan in analytics
-      await storage.incrementAnalyticValue('qrScans');
-      
-      const host = req.headers.host || 'localhost:5000';
+      const host = req.headers.host || 'localhost:3000';
       const protocol = req.secure ? 'https' : 'http';
       const uploadUrl = `${protocol}://${host}/upload`;
       
-      // We're returning just the URL that can be used with a QR code service
-      // The frontend will handle the actual QR code generation
+      // Track QR code scan in analytics
+      try {
+        await storage.incrementAnalyticValue('qrScans');
+      } catch (err) {
+        console.error("Failed to track QR scan:", err);
+      }
+      
+      // We're returning both the URL and a URL to a QR code generator service
       res.json({
         uploadUrl,
         qrCodeUrl: `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(uploadUrl)}`
@@ -252,15 +567,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Update display settings
   app.post('/api/display-settings', async (req: Request, res: Response) => {
     try {
+      // Log the request body for debugging
+      console.log("Received display settings update:", JSON.stringify(req.body));
+      
+      // Accept the request data without validation first
+      const requestData = req.body;
+      
+      // Check if it's a text-only format - if so, we need to handle it specially
+      if (requestData.displayFormat === "text-only") {
+        console.log("Detected text-only format, bypassing validation");
+        
+        // Directly update the settings without schema validation
+        const settings = await storage.updateDisplaySettings({
+          ...requestData,
+          displayFormat: "text-only" // Ensure it's correctly set
+        });
+        
+        return res.json(settings);
+      }
+      
+      // For other formats, use regular validation
       const result = displaySettingsSchema.safeParse(req.body);
       
       if (!result.success) {
+        console.error("Validation error:", JSON.stringify(result.error.errors));
         return res.status(400).json({ error: result.error.errors });
       }
       
       const settings = await storage.updateDisplaySettings(result.data);
       res.json(settings);
     } catch (error) {
+      console.error("Display settings update error:", error);
       res.status(500).json({ error: "Failed to update display settings" });
     }
   });
@@ -279,6 +616,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Background upload error:", error);
       res.status(500).json({ error: "Failed to upload background image" });
+    }
+  });
+  
+  // Upload logo image for display
+  app.post('/api/display-settings/logo', upload.single('logo'), async (req: Request, res: Response) => {
+    try {
+      const file = req.file as Express.Multer.File;
+      
+      if (!file) {
+        return res.status(400).json({ error: "No logo image uploaded" });
+      }
+      
+      const settings = await storage.uploadLogoImage(`/uploads/original/${file.filename}`);
+      res.json(settings);
+    } catch (error) {
+      console.error("Logo upload error:", error);
+      res.status(500).json({ error: "Failed to upload logo image" });
     }
   });
   
@@ -329,10 +683,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/display/images', async (req: Request, res: Response) => {
     try {
       // Track view in analytics
-      await storage.incrementAnalyticValue('views');
+      await storage.incrementAnalyticValue('views', 1, 1);
       
       // Get approved photos directly (excluding archived photos)
-      const approvedPhotos = await storage.getPhotos("approved");
+      const approvedPhotos = await storage.getPhotos(1, "approved");
       
       // Sort by display order (lower values first, then by createdAt date)
       const sortedPhotos = [...approvedPhotos].sort((a, b) => {
@@ -367,9 +721,76 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update display settings (partial update)
+  app.patch('/api/display/settings', async (req: Request, res: Response) => {
+    try {
+      // Validate only the fields we want to update
+      const { autoRotate } = req.body;
+      
+      if (typeof autoRotate !== 'boolean' && autoRotate !== undefined) {
+        return res.status(400).json({ error: "Invalid autoRotate value" });
+      }
+      
+      // Update only the provided settings
+      const settings = await storage.updateDisplaySettings({
+        autoRotate: autoRotate !== undefined ? autoRotate : undefined
+      });
+      
+      res.json(settings);
+    } catch (error) {
+      console.error("Display settings patch error:", error);
+      res.status(500).json({ error: "Failed to update display settings" });
+    }
+  });
+  
+  // Set current image in rotation
+  app.post('/api/display/set-current-image', async (req: Request, res: Response) => {
+    try {
+      const { imageId } = req.body;
+      
+      if (!imageId || typeof imageId !== 'number') {
+        return res.status(400).json({ error: "Invalid image ID" });
+      }
+      
+      // Get the photo to set as current
+      const photo = await storage.getPhoto(imageId);
+      
+      if (!photo) {
+        return res.status(404).json({ error: "Image not found" });
+      }
+      
+      if (photo.status !== "approved") {
+        return res.status(400).json({ error: "Image is not approved for display" });
+      }
+      
+      // Get all approved photos
+      const approvedPhotos = await storage.getPhotos("approved");
+      
+      // Reorder the photos to put the target image first
+      const photoOrders = approvedPhotos.map(p => {
+        if (p.id === imageId) {
+          // Set target image to order 0 (first position)
+          return { photoId: p.id, displayOrder: 0 };
+        } else {
+          // Shift other photos down by 1
+          return { photoId: p.id, displayOrder: (p.displayOrder || 0) + 1 };
+        }
+      });
+      
+      // Update all display orders
+      const updatedPhotos = await storage.updatePhotosDisplayOrder(photoOrders);
+      
+      res.json({
+        success: true,
+        currentImageId: imageId,
+        message: "Current image has been set"
+      });
+    } catch (error) {
+      console.error("Set current image error:", error);
+      res.status(500).json({ error: "Failed to set current image" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
-
-// Import express for static typing
-import express from 'express';

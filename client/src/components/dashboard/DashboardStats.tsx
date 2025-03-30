@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { StatCard } from "@/components/ui/styled-card";
+import { Camera, CheckCircle, Archive, Clock } from "lucide-react";
 
 interface StatsResponse {
   totalUploads: number;
@@ -18,13 +19,11 @@ export default function DashboardStats() {
     return (
       <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
         {Array(4).fill(null).map((_, i) => (
-          <Card key={i}>
-            <CardContent className="p-6">
-              <Skeleton className="h-10 w-10 rounded-md mb-3" />
-              <Skeleton className="h-5 w-24 mb-2" />
-              <Skeleton className="h-7 w-16" />
-            </CardContent>
-          </Card>
+          <div key={i} className="rounded-xl border border-border bg-card p-6 shadow-sm">
+            <Skeleton className="h-10 w-10 rounded-full mb-3" />
+            <Skeleton className="h-5 w-24 mb-2" />
+            <Skeleton className="h-7 w-16" />
+          </div>
         ))}
       </div>
     );
@@ -32,7 +31,7 @@ export default function DashboardStats() {
 
   if (error) {
     return (
-      <div className="mt-6 p-4 bg-red-50 text-red-800 rounded-md">
+      <div className="mt-6 p-4 bg-destructive/10 text-destructive rounded-md">
         Error loading stats: {error instanceof Error ? error.message : "Unknown error"}
       </div>
     );
@@ -42,74 +41,34 @@ export default function DashboardStats() {
     {
       title: "Total Uploads",
       value: data?.totalUploads || 0,
-      icon: (
-        <svg className="h-6 w-6 text-primary-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-        </svg>
-      ),
-      bgColor: "bg-primary-100",
-      textColor: "text-primary-600"
+      icon: <Camera className="h-6 w-6 text-primary" />
     },
     {
       title: "Approved Photos",
       value: data?.approvedPhotos || 0,
-      icon: (
-        <svg className="h-6 w-6 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-      ),
-      bgColor: "bg-green-100",
-      textColor: "text-green-600"
+      icon: <CheckCircle className="h-6 w-6 text-green-600 dark:text-green-500" />
     },
     {
       title: "Archived Photos",
       value: data?.archivedPhotos || 0,
-      icon: (
-        <svg className="h-6 w-6 text-purple-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
-        </svg>
-      ),
-      bgColor: "bg-purple-100",
-      textColor: "text-purple-600"
+      icon: <Archive className="h-6 w-6 text-purple-600 dark:text-purple-500" />
     },
     {
       title: "Pending Approval",
       value: data?.pendingApproval || 0,
-      icon: (
-        <svg className="h-6 w-6 text-yellow-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-      ),
-      bgColor: "bg-yellow-100",
-      textColor: "text-yellow-600"
+      icon: <Clock className="h-6 w-6 text-yellow-600 dark:text-yellow-500" />
     }
   ];
 
   return (
     <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
       {stats.map((stat, index) => (
-        <Card key={index} className="bg-white overflow-hidden shadow rounded-lg">
-          <CardContent className="px-4 py-5 sm:p-6">
-            <div className="flex items-center">
-              <div className={`flex-shrink-0 ${stat.bgColor} rounded-md p-3`}>
-                {stat.icon}
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">
-                    {stat.title}
-                  </dt>
-                  <dd>
-                    <div className="text-lg font-semibold text-gray-900">
-                      {stat.value}
-                    </div>
-                  </dd>
-                </dl>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <StatCard
+          key={index}
+          title={stat.title}
+          value={stat.value}
+          icon={stat.icon}
+        />
       ))}
     </div>
   );

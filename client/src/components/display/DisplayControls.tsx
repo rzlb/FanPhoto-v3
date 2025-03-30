@@ -24,12 +24,12 @@ export default function DisplayControls({
   onIntervalChange
 }: DisplayControlsProps) {
   return (
-    <div className={`absolute inset-x-0 bottom-0 bg-gradient-to-t from-black via-black/80 to-transparent h-28 ${isVisible ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300 flex items-end font-[Arial]`}>
+    <div className={`display-controls ${isVisible ? 'opacity-100' : 'opacity-0'}`}>
       <div className="w-full px-8 py-5 flex justify-between items-center">
         <div className="flex items-center space-x-6">
           <button
             type="button"
-            className="p-3 rounded-full bg-zinc-800/70 text-white hover:bg-zinc-700/80 hover:scale-105 transition-all duration-200"
+            className="control-button"
             onClick={onPrevious}
             title="Previous"
           >
@@ -39,7 +39,7 @@ export default function DisplayControls({
           </button>
           <button
             type="button"
-            className="p-3 rounded-full bg-zinc-800/70 text-white hover:bg-zinc-700/80 hover:scale-105 transition-all duration-200"
+            className="control-button"
             onClick={onPauseToggle}
             title={isPaused ? "Play" : "Pause"}
           >
@@ -56,7 +56,7 @@ export default function DisplayControls({
           </button>
           <button
             type="button"
-            className="p-3 rounded-full bg-zinc-800/70 text-white hover:bg-zinc-700/80 hover:scale-105 transition-all duration-200"
+            className="control-button"
             onClick={onNext}
             title="Next"
           >
@@ -67,7 +67,7 @@ export default function DisplayControls({
         </div>
         
         <div className="flex items-center space-x-6">
-          <span className="text-white text-sm bg-zinc-800/70 px-3 py-2 rounded-md">
+          <span className="image-counter">
             <span className="text-blue-400 font-semibold">{currentIndex + 1}</span>
             <span className="mx-1">/</span>
             <span>{totalImages}</span>
@@ -77,7 +77,7 @@ export default function DisplayControls({
             value={interval.toString()}
             onValueChange={(value) => onIntervalChange(parseInt(value))}
           >
-            <SelectTrigger className="bg-zinc-800/70 text-white border-0 text-sm py-2 px-3 rounded hover:bg-zinc-700/80 focus:ring-2 focus:ring-blue-400 w-48">
+            <SelectTrigger className="interval-select">
               <SelectValue placeholder="Slideshow timing" />
             </SelectTrigger>
             <SelectContent className="bg-zinc-800 border-zinc-700">
@@ -92,7 +92,7 @@ export default function DisplayControls({
           
           <button
             type="button"
-            className="p-3 rounded-full bg-zinc-800/70 text-white hover:bg-zinc-700/80 hover:scale-105 transition-all duration-200"
+            className="control-button"
             onClick={() => {
               if (document.fullscreenElement) {
                 document.exitFullscreen();

@@ -27,6 +27,13 @@ interface DisplayCarouselProps {
   captionFontFamily?: string;
   captionFontColor?: string;
   captionFontSize?: number;
+  textPosition?: string;
+  textAlignment?: string;
+  textPadding?: number;
+  textMaxWidth?: string;
+  textBackground?: boolean;
+  textBackgroundColor?: string;
+  textBackgroundOpacity?: number;
 }
 
 export default function DisplayCarousel({ 
@@ -46,7 +53,14 @@ export default function DisplayCarousel({
   captionBgColor = "rgba(0,0,0,0.5)",
   captionFontFamily = "Arial",
   captionFontColor = "#ffffff",
-  captionFontSize = 14
+  captionFontSize = 14,
+  textPosition = "overlay-bottom",
+  textAlignment = "center",
+  textPadding = 10,
+  textMaxWidth = "full",
+  textBackground = true,
+  textBackgroundColor = "#000000",
+  textBackgroundOpacity = 50
 }: DisplayCarouselProps) {
   const [direction, setDirection] = useState(0);
   const [previousIndex, setPreviousIndex] = useState(0);
@@ -68,61 +82,109 @@ export default function DisplayCarousel({
   
   const currentImage = images[currentIndex];
 
+  // Set CSS variables for text styling
+  useEffect(() => {
+    const root = document.documentElement;
+    root.style.setProperty('--text-color', fontColor);
+    root.style.setProperty('--text-font-family', fontFamily);
+    root.style.setProperty('--text-font-size', `${fontSize}px`);
+    root.style.setProperty('--text-padding', `${textPadding}px`);
+    root.style.setProperty('--text-inner-padding', `${textPadding / 2}px`);
+    
+    // Calculate RGBA background color
+    const hexToRgb = (hex: string) => {
+      const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+      return result ? {
+        r: parseInt(result[1], 16),
+        g: parseInt(result[2], 16),
+        b: parseInt(result[3], 16)
+      } : null;
+    };
+    
+    const rgbColor = hexToRgb(textBackgroundColor);
+    if (rgbColor) {
+      const rgba = `rgba(${rgbColor.r}, ${rgbColor.g}, ${rgbColor.b}, ${textBackgroundOpacity / 100})`;
+      root.style.setProperty('--text-background-color', rgba);
+    }
+    
+    // Set max width based on selected option
+    const maxWidthValue = textMaxWidth === 'full' ? '100%' : 
+                          textMaxWidth === '3/4' ? '75%' : 
+                          textMaxWidth === '1/2' ? '50%' : '33.333%';
+    root.style.setProperty('--text-max-width', maxWidthValue);
+  }, [
+    fontColor, 
+    fontFamily, 
+    fontSize, 
+    textPadding, 
+    textBackgroundColor, 
+    textBackgroundOpacity, 
+    textMaxWidth
+  ]);
+
   // Define different animation variants based on transition effect
   const slideVariants = {
     enter: (direction: number) => ({
-      x: direction > 0 ? 1000 : -1000,
-      opacity: 0
+      x: direction > 0 ? 300 : -300,
+      opacity: 0,
+      scale: 1 // Keep scale constant for slide transitions
     }),
     center: {
       x: 0,
-      opacity: 1
+      opacity: 1,
+      scale: 1
     },
     exit: (direction: number) => ({
-      x: direction < 0 ? 1000 : -1000,
-      opacity: 0
+      x: direction < 0 ? 300 : -300,
+      opacity: 0,
+      scale: 1
     })
   };
 
   const fadeVariants = {
     enter: {
-      opacity: 0
+      opacity: 0,
+      scale: 1 // Keep scale constant for fade transitions
     },
     center: {
-      opacity: 1
+      opacity: 1,
+      scale: 1
     },
     exit: {
-      opacity: 0
+      opacity: 0,
+      scale: 1
     }
   };
 
+  // Instead of scaling the entire component, just use opacity for zoom effect
   const zoomVariants = {
     enter: {
-      scale: 0.8,
-      opacity: 0
+      opacity: 0,
+      scale: 1 // Keep scale constant - no more zoom
     },
     center: {
-      scale: 1,
-      opacity: 1
+      opacity: 1,
+      scale: 1
     },
     exit: {
-      scale: 0.8,
-      opacity: 0
+      opacity: 0,
+      scale: 1
     }
   };
 
+  // Remove rotation for flip effect - just use opacity
   const flipVariants = {
     enter: {
-      rotateY: 90,
-      opacity: 0
+      opacity: 0,
+      scale: 1 // Keep scale constant - no more flip
     },
     center: {
-      rotateY: 0,
-      opacity: 1
+      opacity: 1,
+      scale: 1
     },
     exit: {
-      rotateY: -90,
-      opacity: 0
+      opacity: 0,
+      scale: 1
     }
   };
 
@@ -133,121 +195,150 @@ export default function DisplayCarousel({
     transitionEffect === "flip" ? flipVariants :
     slideVariants; // Default to slide
 
-  // For the transition properties
+  // For the transition properties - keep them simple and consistent
   const transition = 
     transitionEffect === "fade" ? {
-      opacity: { duration: 0.5 }
+      opacity: { duration: 0.5 },
+      scale: { duration: 0 } // Instant scale transition
     } :
     transitionEffect === "zoom" ? {
-      scale: { type: "spring", stiffness: 300, damping: 30 },
-      opacity: { duration: 0.3 }
+      opacity: { duration: 0.5 },
+      scale: { duration: 0 } // Instant scale transition
     } :
     transitionEffect === "flip" ? {
-      rotateY: { duration: 0.6 },
-      opacity: { duration: 0.3 }
+      opacity: { duration: 0.5 },
+      scale: { duration: 0 } // Instant scale transition
     } : {
-      x: { type: "spring", stiffness: 300, damping: 30 },
-      opacity: { duration: 0.2 }
+      x: { duration: 0.3, ease: "easeInOut" },
+      opacity: { duration: 0.3 },
+      scale: { duration: 0 } // Instant scale transition
     };
 
   return (
-    <div className="absolute inset-0 flex items-center justify-center">
-      <AnimatePresence initial={false} custom={direction}>
-        <motion.div
-          key={currentIndex}
-          custom={direction}
-          variants={variants}
-          initial="enter"
-          animate="center"
-          exit="exit"
-          transition={transition}
-          className={`w-full h-full flex p-4 md:p-8 lg:p-12 ${
-            imagePosition === 'center' ? 'items-center justify-center' :
-            imagePosition === 'top' ? 'items-start justify-center' :
-            imagePosition === 'bottom' ? 'items-end justify-center' :
-            imagePosition === 'left' ? 'items-center justify-start' :
-            imagePosition === 'right' ? 'items-center justify-end' :
-            'items-center justify-center'
-          }`}
-        >
-          <div
-            className="relative rounded-md"
-            style={{ 
-              borderStyle: borderStyle === "none" ? undefined : borderStyle,
-              borderWidth: borderStyle === "none" ? 0 : `${borderWidth}px`,
-              borderColor: borderColor,
-              maxHeight: "80vh",
-              maxWidth: "80vw",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center"
-            }}
+    <div className="display-carousel">
+      {/* Fixed container to maintain consistent positioning */}
+      <div className="fixed-position-container">
+        <AnimatePresence initial={false} custom={direction} mode="wait">
+          <motion.div
+            key={currentIndex}
+            custom={direction}
+            variants={variants}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            transition={transition}
+            className="carousel-motion-container"
+            layout={false} // Turn off layout animations
           >
-            <img
-              src={currentImage.originalPath}
-              alt={`Photo by ${currentImage.submitterName}`}
-              className={`max-w-full max-h-full object-contain shadow-2xl ${
-                showCaptions && currentImage.caption && !separateCaptions ? 'rounded-t-md' : 'rounded-md'
-              }`}
+            <div
+              className="relative rounded-md carousel-image-container"
               style={{ 
-                boxShadow: '0 4px 30px rgba(0, 0, 0, 0.5)',
-                maxHeight: (showCaptions && currentImage.caption && !separateCaptions) ? "calc(80vh - 70px)" : "80vh"
-              }}
-            />
-            
-            {/* Caption display - only show if caption exists and showCaptions is true */}
-            {showCaptions && currentImage.caption && !separateCaptions && (
-              <div 
-                className="w-full p-4 text-center rounded-b-md"
-                style={{
-                  fontFamily: captionFontFamily,
-                  color: captionFontColor,
-                  backgroundColor: captionBgColor,
-                  fontSize: `${captionFontSize}px`,
-                }}
-              >
-                {currentImage.caption}
-              </div>
-            )}
-            
-            {/* Separate caption box if separateCaptions is true */}
-            {showCaptions && currentImage.caption && separateCaptions && (
-              <div 
-                className="absolute bottom-8 left-0 right-0 mx-auto p-4 text-center rounded-md max-w-2xl"
-                style={{
-                  fontFamily: captionFontFamily,
-                  color: captionFontColor,
-                  backgroundColor: captionBgColor,
-                  fontSize: `${captionFontSize}px`,
-                }}
-              >
-                {currentImage.caption}
-              </div>
-            )}
-          </div>
-          
-          {showInfo && (
-            <div 
-              className="absolute bottom-28 left-8 bg-black/60 px-6 py-3 rounded-lg backdrop-blur-sm border border-zinc-700"
-              style={{
-                fontFamily: fontFamily,
-                color: fontColor,
+                borderStyle: borderStyle === "none" ? undefined : borderStyle,
+                borderWidth: borderStyle === "none" ? 0 : `${borderWidth}px`,
+                borderColor: borderColor
               }}
             >
-              <p style={{ fontSize: `${fontSize - 2}px`, fontWeight: 'bold' }}>
-                By: {currentImage.submitterName || "Anonymous"}
-              </p>
-              <p style={{ fontSize: `${fontSize - 4}px`, opacity: 0.8 }}>
-                {new Date(currentImage.createdAt).toLocaleDateString(undefined, {
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric'
-                })}
-              </p>
+              {/* Text that goes above the image if position is above-image */}
+              {showInfo && textPosition === "above-image" && (
+                <div className={`text-position-above-image text-align-${textAlignment} text-width-${textMaxWidth.replace('/', '\\/')}`}>
+                  <div className={`display-text ${textBackground ? 'with-text-background' : ''}`}>
+                    <p className="font-bold">{currentImage.submitterName || "Anonymous"}</p>
+                    {currentImage.caption && showCaptions && (
+                      <p className="mt-1">{currentImage.caption}</p>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              <div className="carousel-image-wrapper">
+                <img
+                  src={currentImage.originalPath}
+                  alt={`Photo by ${currentImage.submitterName}`}
+                  className={`carousel-image rounded-md`}
+                  style={{ 
+                    boxShadow: '0 4px 30px rgba(0, 0, 0, 0.5)'
+                  }}
+                />
+                
+                {/* Text overlay on top of image */}
+                {showInfo && textPosition === "overlay-bottom" && (
+                  <div className={`text-position-overlay-bottom text-align-${textAlignment} text-width-${textMaxWidth.replace('/', '\\/')}`}>
+                    <div className={`display-text ${textBackground ? 'with-text-background' : ''}`}>
+                      <p className="font-bold">{currentImage.submitterName || "Anonymous"}</p>
+                      {currentImage.caption && showCaptions && (
+                        <p className="mt-1">{currentImage.caption}</p>
+                      )}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Text overlay at the top of image */}
+                {showInfo && textPosition === "overlay-top" && (
+                  <div className={`text-position-overlay-top text-align-${textAlignment} text-width-${textMaxWidth.replace('/', '\\/')}`}>
+                    <div className={`display-text ${textBackground ? 'with-text-background' : ''}`}>
+                      <p className="font-bold">{currentImage.submitterName || "Anonymous"}</p>
+                      {currentImage.caption && showCaptions && (
+                        <p className="mt-1">{currentImage.caption}</p>
+                      )}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Text positioned to the left of image */}
+                {showInfo && textPosition === "left-of-image" && (
+                  <div className={`text-position-left-of-image text-align-${textAlignment} text-width-${textMaxWidth.replace('/', '\\/')}`}>
+                    <div className={`display-text ${textBackground ? 'with-text-background' : ''}`}>
+                      <p className="font-bold">{currentImage.submitterName || "Anonymous"}</p>
+                      {currentImage.caption && showCaptions && (
+                        <p className="mt-1">{currentImage.caption}</p>
+                      )}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Text positioned to the right of image */}
+                {showInfo && textPosition === "right-of-image" && (
+                  <div className={`text-position-right-of-image text-align-${textAlignment} text-width-${textMaxWidth.replace('/', '\\/')}`}>
+                    <div className={`display-text ${textBackground ? 'with-text-background' : ''}`}>
+                      <p className="font-bold">{currentImage.submitterName || "Anonymous"}</p>
+                      {currentImage.caption && showCaptions && (
+                        <p className="mt-1">{currentImage.caption}</p>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+              
+              {/* Text that goes below the image if position is below-image */}
+              {showInfo && textPosition === "below-image" && (
+                <div className={`text-position-below-image text-align-${textAlignment} text-width-${textMaxWidth.replace('/', '\\/')}`}>
+                  <div className={`display-text ${textBackground ? 'with-text-background' : ''}`}>
+                    <p className="font-bold">{currentImage.submitterName || "Anonymous"}</p>
+                    {currentImage.caption && showCaptions && (
+                      <p className="mt-1">{currentImage.caption}</p>
+                    )}
+                  </div>
+                </div>
+              )}
+              
+              {/* Legacy caption display - only show if using separateCaptions and not using new text positioning */}
+              {showCaptions && currentImage.caption && separateCaptions && textPosition === "overlay-bottom" && (
+                <div 
+                  className="carousel-caption-separate absolute bottom-8 left-0 right-0 mx-auto p-4 text-center rounded-md max-w-2xl"
+                  style={{
+                    fontFamily: captionFontFamily,
+                    color: captionFontColor,
+                    backgroundColor: captionBgColor,
+                    fontSize: `${captionFontSize}px`,
+                  }}
+                >
+                  {currentImage.caption}
+                </div>
+              )}
             </div>
-          )}
-        </motion.div>
-      </AnimatePresence>
+          </motion.div>
+        </AnimatePresence>
+      </div>
     </div>
   );
 }

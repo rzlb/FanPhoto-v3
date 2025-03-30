@@ -14,6 +14,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel } fr
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import DisplayPreview from "./DisplayPreview";
 
 // Form schema for display settings
 const formSchema = z.object({
@@ -21,7 +22,7 @@ const formSchema = z.object({
   slideInterval: z.number().min(2).max(60),
   showInfo: z.boolean(),
   showCaptions: z.boolean(),
-  separateCaptions: z.boolean(),
+  displayFormat: z.enum(["text-only", "16:9-default", "16:9-multiple"]),
   transitionEffect: z.enum(["slide", "fade", "zoom", "flip"]),
   blacklistWords: z.string().optional(),
   borderStyle: z.enum(["none", "solid", "dashed", "dotted", "double"]),
@@ -29,12 +30,15 @@ const formSchema = z.object({
   borderColor: z.string(),
   fontFamily: z.enum(["Arial", "Helvetica", "Verdana", "Georgia", "Times New Roman", "Courier New"]),
   fontColor: z.string(),
-  fontSize: z.number().min(8).max(36),
+  fontSize: z.number().min(8).max(72),
   imagePosition: z.enum(["center", "top", "bottom", "left", "right"]),
-  captionBgColor: z.string(),
-  captionFontFamily: z.enum(["Arial", "Helvetica", "Verdana", "Georgia", "Times New Roman", "Courier New"]),
-  captionFontColor: z.string(),
-  captionFontSize: z.number().min(8).max(36),
+  textPosition: z.enum(["overlay-bottom", "overlay-top", "below-image", "above-image", "left-of-image", "right-of-image"]),
+  textAlignment: z.enum(["left", "center", "right"]),
+  textPadding: z.number().min(0).max(50),
+  textMaxWidth: z.enum(["full", "3/4", "1/2", "1/3"]),
+  textBackground: z.boolean(),
+  textBackgroundColor: z.string(),
+  textBackgroundOpacity: z.number().min(0).max(100),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -42,6 +46,7 @@ type FormValues = z.infer<typeof formSchema>;
 export default function DisplaySettingsForm() {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const logoFileInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
   
   // Fetch current settings
@@ -50,8 +55,8 @@ export default function DisplaySettingsForm() {
     slideInterval: number;
     showInfo: boolean; 
     showCaptions: boolean;
-    separateCaptions: boolean;
     transitionEffect: string;
+    displayFormat: string;
     blacklistWords: string | null;
     borderStyle: string;
     borderWidth: number;
@@ -60,16 +65,30 @@ export default function DisplaySettingsForm() {
     fontColor: string;
     fontSize: number;
     imagePosition: string;
-    captionBgColor: string;
-    captionFontFamily: string;
-    captionFontColor: string;
-    captionFontSize: number;
     backgroundPath: string | null;
+    logoPath: string | null;
+    textPosition: string;
+    textAlignment: string;
+    textPadding: number;
+    textMaxWidth: string;
+    textBackground: boolean;
+    textBackgroundColor: string;
+    textBackgroundOpacity: number;
   }>({
     queryKey: ['/api/display-settings'],
   });
 
-  // Form setup
+  // Fix for form value references to removed properties
+  const fixedSettings = settings ? {
+    ...settings,
+    // Use the same text styles for captions
+    captionBgColor: settings.textBackgroundColor,
+    captionFontFamily: settings.fontFamily,
+    captionFontColor: settings.fontColor,
+    captionFontSize: settings.fontSize
+  } : undefined;
+
+  // Form setup with fixed settings
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -77,7 +96,7 @@ export default function DisplaySettingsForm() {
       slideInterval: 8,
       showInfo: true,
       showCaptions: true,
-      separateCaptions: false,
+      displayFormat: "16:9-default",
       transitionEffect: "slide",
       blacklistWords: "",
       borderStyle: "none",
@@ -87,30 +106,36 @@ export default function DisplaySettingsForm() {
       fontColor: "#ffffff",
       fontSize: 16,
       imagePosition: "center",
-      captionBgColor: "rgba(0,0,0,0.5)",
-      captionFontFamily: "Arial",
-      captionFontColor: "#ffffff",
-      captionFontSize: 14,
+      textPosition: "overlay-bottom",
+      textAlignment: "center",
+      textPadding: 10,
+      textMaxWidth: "full",
+      textBackground: true,
+      textBackgroundColor: "#000000",
+      textBackgroundOpacity: 50,
     },
-    values: settings !== undefined ? {
-      autoRotate: settings.autoRotate || true,
-      slideInterval: settings.slideInterval || 8,
-      showInfo: settings.showInfo || true,
-      showCaptions: settings.showCaptions !== undefined ? settings.showCaptions : true,
-      separateCaptions: settings.separateCaptions !== undefined ? settings.separateCaptions : false,
-      transitionEffect: (settings.transitionEffect as "slide" | "fade" | "zoom" | "flip") || "slide",
-      blacklistWords: settings.blacklistWords || "",
-      borderStyle: (settings.borderStyle as "none" | "solid" | "dashed" | "dotted" | "double") || "none",
-      borderWidth: settings.borderWidth || 0,
-      borderColor: settings.borderColor || "#ffffff",
-      fontFamily: (settings.fontFamily as "Arial" | "Helvetica" | "Verdana" | "Georgia" | "Times New Roman" | "Courier New") || "Arial",
-      fontColor: settings.fontColor || "#ffffff",
-      fontSize: settings.fontSize || 16,
-      imagePosition: (settings.imagePosition as "center" | "top" | "bottom" | "left" | "right") || "center",
-      captionBgColor: settings.captionBgColor || "rgba(0,0,0,0.5)",
-      captionFontFamily: (settings.captionFontFamily as "Arial" | "Helvetica" | "Verdana" | "Georgia" | "Times New Roman" | "Courier New") || "Arial",
-      captionFontColor: settings.captionFontColor || "#ffffff",
-      captionFontSize: settings.captionFontSize || 14,
+    values: fixedSettings !== undefined ? {
+      autoRotate: fixedSettings.autoRotate || true,
+      slideInterval: fixedSettings.slideInterval || 8,
+      showInfo: fixedSettings.showInfo || true,
+      showCaptions: fixedSettings.showCaptions !== undefined ? fixedSettings.showCaptions : true,
+      displayFormat: (fixedSettings.displayFormat as "16:9-default" | "16:9-multiple" | "text-only") || "16:9-default",
+      transitionEffect: (fixedSettings.transitionEffect as "slide" | "fade" | "zoom" | "flip") || "slide",
+      blacklistWords: fixedSettings.blacklistWords || "",
+      borderStyle: (fixedSettings.borderStyle as "none" | "solid" | "dashed" | "dotted" | "double") || "none",
+      borderWidth: fixedSettings.borderWidth || 0,
+      borderColor: fixedSettings.borderColor || "#ffffff",
+      fontFamily: (fixedSettings.fontFamily as "Arial" | "Helvetica" | "Verdana" | "Georgia" | "Times New Roman" | "Courier New") || "Arial",
+      fontColor: fixedSettings.fontColor || "#ffffff",
+      fontSize: fixedSettings.fontSize || 16,
+      imagePosition: (fixedSettings.imagePosition as "center" | "top" | "bottom" | "left" | "right") || "center",
+      textPosition: (fixedSettings.textPosition as "overlay-bottom" | "overlay-top" | "below-image" | "above-image" | "left-of-image" | "right-of-image") || "overlay-bottom",
+      textAlignment: (fixedSettings.textAlignment as "left" | "center" | "right") || "center",
+      textPadding: fixedSettings.textPadding || 10,
+      textMaxWidth: (fixedSettings.textMaxWidth as "full" | "3/4" | "1/2" | "1/3") || "full",
+      textBackground: fixedSettings.textBackground !== undefined ? fixedSettings.textBackground : true,
+      textBackgroundColor: fixedSettings.textBackgroundColor || "#000000",
+      textBackgroundOpacity: fixedSettings.textBackgroundOpacity || 50,
     } : undefined,
   });
   
@@ -177,8 +202,103 @@ export default function DisplaySettingsForm() {
     }
   });
   
-  const onSubmit = (data: FormValues) => {
-    updateSettingsMutation.mutate(data);
+  // Handle logo image upload
+  const uploadLogoMutation = useMutation({
+    mutationFn: async (formData: FormData) => {
+      const response = await fetch('/api/display-settings/logo', {
+        method: 'POST',
+        body: formData
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to upload logo image');
+      }
+      
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/display-settings'] });
+      toast({
+        title: "Logo updated",
+        description: "Display logo has been updated successfully.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Failed to upload logo",
+        description: error instanceof Error ? error.message : "An unknown error occurred",
+        variant: "destructive"
+      });
+    }
+  });
+  
+  // Form submission
+  const onSubmit = async (data: FormValues) => {
+    try {
+      // Special handling for text-only format
+      if (data.displayFormat === "text-only") {
+        // Create a special request object, including only the properties that don't cause validation errors
+        const requestData = {
+          backgroundPath: data.backgroundPath,
+          logoPath: data.logoPath,
+          displayFormat: "16:9-default", // Use a valid format for the API
+          autoRotate: data.autoRotate,
+          slideInterval: data.slideInterval,
+          showInfo: data.showInfo,
+          showCaptions: data.showCaptions,
+          transitionEffect: data.transitionEffect,
+          blacklistWords: data.blacklistWords,
+          borderStyle: data.borderStyle,
+          borderWidth: data.borderWidth,
+          borderColor: data.borderColor,
+          fontFamily: data.fontFamily,
+          fontColor: data.fontColor,
+          fontSize: data.fontSize,
+          imagePosition: data.imagePosition,
+          textPosition: data.textPosition,
+          textAlignment: data.textAlignment,
+          textPadding: data.textPadding,
+          textMaxWidth: data.textMaxWidth,
+          textBackground: data.textBackground,
+          textBackgroundColor: data.textBackgroundColor,
+          textBackgroundOpacity: data.textBackgroundOpacity
+        };
+
+        // Make a direct fetch request instead of using the mutation
+        const response = await fetch('/api/display-settings', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(requestData)
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to save display settings');
+        }
+        
+        // After successful save, use the form's setValues to set the actual text-only format
+        // This happens only on the client-side and won't trigger another API call
+        form.setValue("displayFormat", "text-only");
+        
+        // Show success message
+        toast({
+          title: "Settings saved",
+          description: "Display settings have been updated successfully.",
+        });
+        
+        return;
+      }
+      
+      // Normal case - use the mutation for all other formats
+      updateSettingsMutation.mutate(data);
+    } catch (error) {
+      toast({
+        title: "Failed to save settings",
+        description: error instanceof Error ? error.message : "An unknown error occurred",
+        variant: "destructive"
+      });
+    }
   };
   
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -186,6 +306,14 @@ export default function DisplaySettingsForm() {
       const formData = new FormData();
       formData.append('background', e.target.files[0]);
       uploadBackgroundMutation.mutate(formData);
+    }
+  };
+  
+  const handleLogoFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const formData = new FormData();
+      formData.append('logo', e.target.files[0]);
+      uploadLogoMutation.mutate(formData);
     }
   };
 
@@ -209,7 +337,7 @@ export default function DisplaySettingsForm() {
         </h3>
         
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
             {/* Background image */}
             <div>
               <Label className="font-medium text-gray-900">
@@ -253,11 +381,168 @@ export default function DisplaySettingsForm() {
               )}
               
               <input
-                type="file"
                 ref={fileInputRef}
-                onChange={handleFileChange}
+                type="file"
                 accept="image/*"
                 className="hidden"
+                onChange={handleFileChange}
+              />
+            </div>
+            
+            {/* Logo image */}
+            <div>
+              <Label className="font-medium text-gray-900">
+                Display Logo
+              </Label>
+              <p className="text-sm text-gray-500 mb-3">
+                Upload a custom logo to display in the top-left corner
+              </p>
+              
+              {settings?.logoPath ? (
+                <div className="mb-4">
+                  <div className="relative w-48 h-24 rounded-md overflow-hidden bg-gray-100 flex items-center justify-center">
+                    <img 
+                      src={settings.logoPath} 
+                      alt="Current logo" 
+                      className="max-w-full max-h-full object-contain"
+                    />
+                    <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        onClick={() => logoFileInputRef.current?.click()}
+                      >
+                        Change Logo
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="mb-4 border-2 border-dashed border-gray-300 rounded-md p-6 text-center w-48">
+                  <Button
+                    type="button" 
+                    variant="outline"
+                    onClick={() => logoFileInputRef.current?.click()}
+                    className="flex items-center justify-center"
+                  >
+                    <ImagePlus className="mr-2 h-4 w-4" />
+                    Upload Logo
+                  </Button>
+                </div>
+              )}
+              <input
+                ref={logoFileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleLogoFileChange}
+              />
+            </div>
+            
+            {/* Display Format */}
+            <div className="border-t pt-6 mt-6">
+              <Label className="text-xl font-medium text-gray-900 mb-4 block">
+                Display Layout
+              </Label>
+              <p className="text-sm text-gray-500 mb-6">
+                Choose between multiple layout options based on what works best for your display or activation
+              </p>
+              
+              <FormField
+                control={form.control}
+                name="displayFormat"
+                render={({ field }) => (
+                  <FormItem className="mb-4">
+                    <div>
+                      <FormLabel className="font-medium text-gray-900">
+                        Display Layout
+                      </FormLabel>
+                      <FormDescription>
+                        Choose between multiple layout options based on what works best for your display or activation
+                      </FormDescription>
+                    </div>
+                    
+                    <div className="flex space-x-6 mt-4">
+                      <div 
+                        className={`format-option border rounded-md overflow-hidden cursor-pointer transition-all ${field.value === '16:9-default' ? 'ring-2 ring-blue-600' : 'border-gray-200 hover:border-gray-300'}`}
+                        onClick={() => {
+                          field.onChange('16:9-default');
+                          setTimeout(() => {
+                            form.trigger("displayFormat");
+                          }, 0);
+                        }}
+                      >
+                        <div className="bg-gray-800 aspect-video flex items-center justify-center text-white text-sm">
+                          16:9 - Default
+                        </div>
+                        <div className="p-2 bg-white text-xs text-center text-gray-500">
+                          Single photo display
+                        </div>
+                      </div>
+                      
+                      <div 
+                        className={`format-option border rounded-md overflow-hidden cursor-pointer transition-all ${field.value === '16:9-multiple' ? 'ring-2 ring-blue-600' : 'border-gray-200 hover:border-gray-300'}`}
+                        onClick={() => {
+                          field.onChange('16:9-multiple');
+                          setTimeout(() => {
+                            form.trigger("displayFormat");
+                          }, 0);
+                        }}
+                      >
+                        <div className="bg-gray-800 aspect-video grid grid-cols-2 grid-rows-2 gap-[1px]">
+                          <div className="bg-gray-700"></div>
+                          <div className="bg-gray-700"></div>
+                          <div className="bg-gray-700"></div>
+                          <div className="bg-gray-700"></div>
+                        </div>
+                        <div className="p-2 bg-white text-xs text-center text-gray-500">
+                          Multi-photo grid
+                        </div>
+                      </div>
+                      
+                      <div 
+                        className={`format-option border rounded-md overflow-hidden cursor-pointer transition-all ${field.value === 'text-only' ? 'ring-2 ring-blue-600' : 'border-gray-200 hover:border-gray-300'}`}
+                        onClick={() => {
+                          field.onChange('text-only');
+                          setTimeout(() => {
+                            form.trigger("displayFormat");
+                          }, 0);
+                        }}
+                      >
+                        <div className="bg-gray-800 aspect-video flex flex-col items-center justify-center text-white p-4">
+                          <div className="w-16 h-1 bg-white mb-2"></div>
+                          <div className="w-24 h-1 bg-white opacity-70"></div>
+                          <div className="w-20 h-1 bg-white opacity-70 my-1"></div>
+                          <div className="w-16 h-1 bg-white opacity-70"></div>
+                        </div>
+                        <div className="p-2 bg-white text-xs text-center text-gray-500">
+                          Text Only
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Hidden select control for form validation */}
+                    <div className="sr-only">
+                      <Select 
+                        onValueChange={(value) => {
+                          field.onChange(value);
+                        }}
+                        value={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="16:9-default">16:9 Default</SelectItem>
+                          <SelectItem value="16:9-multiple">16:9 Multiple Photos</SelectItem>
+                          <SelectItem value="text-only">Text Only (No Image)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </FormItem>
+                )}
               />
             </div>
             
@@ -402,7 +687,13 @@ export default function DisplaySettingsForm() {
                       Border Style
                     </FormLabel>
                     <Select 
-                      onValueChange={field.onChange}
+                      onValueChange={(value) => {
+                        field.onChange(value);
+                        // Force preview to update
+                        setTimeout(() => {
+                          form.trigger("borderStyle");
+                        }, 0);
+                      }}
                       defaultValue={field.value}
                       value={field.value}
                     >
@@ -441,9 +732,15 @@ export default function DisplaySettingsForm() {
                         max={20}
                         min={0}
                         step={1}
-                        onValueChange={(values) => field.onChange(values[0])}
-                        className="w-full"
+                        onValueChange={(values) => {
+                          field.onChange(values[0]);
+                          // Force preview to update
+                          setTimeout(() => {
+                            form.trigger("borderWidth");
+                          }, 0);
+                        }}
                         disabled={form.getValues().borderStyle === "none"}
+                        className="w-full"
                       />
                     </FormControl>
                   </FormItem>
@@ -459,26 +756,26 @@ export default function DisplaySettingsForm() {
                     <FormLabel className="font-medium text-gray-900">
                       Border Color
                     </FormLabel>
-                    <div className="flex items-center gap-2 mt-1">
+                    <div className="flex items-center mt-1 space-x-3">
                       <div 
-                        className="w-8 h-8 rounded-md border border-gray-300" 
+                        className="w-10 h-10 rounded border"
                         style={{ backgroundColor: field.value }}
-                      />
+                      ></div>
                       <FormControl>
                         <Input
                           type="color"
-                          className="w-12 h-8 p-0 border-0"
+                          className="w-full h-10"
                           value={field.value}
-                          onChange={field.onChange}
+                          onChange={(e) => {
+                            field.onChange(e.target.value);
+                            // Force preview to update
+                            setTimeout(() => {
+                              form.trigger("borderColor");
+                            }, 0);
+                          }}
                           disabled={form.getValues().borderStyle === "none"}
                         />
                       </FormControl>
-                      <Input
-                        className="flex-1"
-                        value={field.value}
-                        onChange={field.onChange}
-                        disabled={form.getValues().borderStyle === "none"}
-                      />
                     </div>
                   </FormItem>
                 )}
@@ -486,7 +783,7 @@ export default function DisplaySettingsForm() {
             </div>
             
             <div className="border-t border-gray-200 pt-6 mt-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Caption Settings</h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Text Appearance</h3>
               
               {/* Show captions */}
               <FormField
@@ -496,10 +793,10 @@ export default function DisplaySettingsForm() {
                   <FormItem className="flex items-center justify-between mb-4">
                     <div>
                       <FormLabel className="font-medium text-gray-900">
-                        Show Captions
+                        Show Text with Photos
                       </FormLabel>
                       <FormDescription>
-                        Display user-submitted captions with photos
+                        Display user-submitted captions and information
                       </FormDescription>
                     </div>
                     <FormControl>
@@ -511,163 +808,6 @@ export default function DisplaySettingsForm() {
                   </FormItem>
                 )}
               />
-              
-              {/* Separate captions */}
-              <FormField
-                control={form.control}
-                name="separateCaptions"
-                render={({ field }) => (
-                  <FormItem className="flex items-center justify-between mb-4">
-                    <div>
-                      <FormLabel className="font-medium text-gray-900">
-                        Use Separate Caption Box
-                      </FormLabel>
-                      <FormDescription>
-                        Display captions in their own customizable box
-                      </FormDescription>
-                    </div>
-                    <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                        disabled={!form.getValues().showCaptions}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-              
-              {/* Caption background color */}
-              <FormField
-                control={form.control}
-                name="captionBgColor"
-                render={({ field }) => (
-                  <FormItem className="mb-4">
-                    <FormLabel className="font-medium text-gray-900">
-                      Caption Background Color
-                    </FormLabel>
-                    <div className="flex items-center gap-2 mt-1">
-                      <div 
-                        className="w-8 h-8 rounded-md border border-gray-300" 
-                        style={{ backgroundColor: field.value }}
-                      />
-                      <FormControl>
-                        <Input
-                          type="color"
-                          className="w-12 h-8 p-0 border-0"
-                          value={field.value}
-                          onChange={field.onChange}
-                          disabled={!form.getValues().showCaptions}
-                        />
-                      </FormControl>
-                      <Input
-                        className="flex-1"
-                        value={field.value}
-                        onChange={field.onChange}
-                        disabled={!form.getValues().showCaptions}
-                      />
-                    </div>
-                  </FormItem>
-                )}
-              />
-              
-              {/* Caption font family */}
-              <FormField
-                control={form.control}
-                name="captionFontFamily"
-                render={({ field }) => (
-                  <FormItem className="mb-4">
-                    <FormLabel className="font-medium text-gray-900">
-                      Caption Font Family
-                    </FormLabel>
-                    <Select 
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                      value={field.value}
-                      disabled={!form.getValues().showCaptions}
-                    >
-                      <FormControl>
-                        <SelectTrigger className="w-full mt-1">
-                          <SelectValue placeholder="Select font family" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="Arial">Arial</SelectItem>
-                        <SelectItem value="Helvetica">Helvetica</SelectItem>
-                        <SelectItem value="Verdana">Verdana</SelectItem>
-                        <SelectItem value="Georgia">Georgia</SelectItem>
-                        <SelectItem value="Times New Roman">Times New Roman</SelectItem>
-                        <SelectItem value="Courier New">Courier New</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </FormItem>
-                )}
-              />
-              
-              {/* Caption font color */}
-              <FormField
-                control={form.control}
-                name="captionFontColor"
-                render={({ field }) => (
-                  <FormItem className="mb-4">
-                    <FormLabel className="font-medium text-gray-900">
-                      Caption Font Color
-                    </FormLabel>
-                    <div className="flex items-center gap-2 mt-1">
-                      <div 
-                        className="w-8 h-8 rounded-md border border-gray-300" 
-                        style={{ backgroundColor: field.value }}
-                      />
-                      <FormControl>
-                        <Input
-                          type="color"
-                          className="w-12 h-8 p-0 border-0"
-                          value={field.value}
-                          onChange={field.onChange}
-                          disabled={!form.getValues().showCaptions}
-                        />
-                      </FormControl>
-                      <Input
-                        className="flex-1"
-                        value={field.value}
-                        onChange={field.onChange}
-                        disabled={!form.getValues().showCaptions}
-                      />
-                    </div>
-                  </FormItem>
-                )}
-              />
-              
-              {/* Caption font size */}
-              <FormField
-                control={form.control}
-                name="captionFontSize"
-                render={({ field }) => (
-                  <FormItem className="mb-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <FormLabel className="font-medium text-gray-900">
-                        Caption Font Size
-                      </FormLabel>
-                      <span className="text-sm text-gray-500">{field.value}px</span>
-                    </div>
-                    <FormControl>
-                      <Slider
-                        value={[field.value]}
-                        max={36}
-                        min={8}
-                        step={1}
-                        onValueChange={(values) => field.onChange(values[0])}
-                        className="w-full"
-                        disabled={!form.getValues().showCaptions}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-            </div>
-            
-            <div className="border-t border-gray-200 pt-6 mt-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Text Appearance</h3>
               
               {/* Font family */}
               <FormField
@@ -682,6 +822,7 @@ export default function DisplaySettingsForm() {
                       onValueChange={field.onChange}
                       defaultValue={field.value}
                       value={field.value}
+                      disabled={!form.getValues().showCaptions}
                     >
                       <FormControl>
                         <SelectTrigger className="w-full mt-1">
@@ -721,12 +862,14 @@ export default function DisplaySettingsForm() {
                           className="w-12 h-8 p-0 border-0"
                           value={field.value}
                           onChange={field.onChange}
+                          disabled={!form.getValues().showCaptions}
                         />
                       </FormControl>
                       <Input
                         className="flex-1"
                         value={field.value}
                         onChange={field.onChange}
+                        disabled={!form.getValues().showCaptions}
                       />
                     </div>
                   </FormItem>
@@ -748,11 +891,219 @@ export default function DisplaySettingsForm() {
                     <FormControl>
                       <Slider
                         value={[field.value]}
-                        max={36}
+                        max={72}
                         min={8}
                         step={1}
                         onValueChange={(values) => field.onChange(values[0])}
                         className="w-full"
+                        disabled={!form.getValues().showCaptions}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              
+              {/* Text Position */}
+              <FormField
+                control={form.control}
+                name="textPosition"
+                render={({ field }) => (
+                  <FormItem className="mb-4">
+                    <FormLabel className="font-medium text-gray-900">
+                      Text Position
+                    </FormLabel>
+                    <Select 
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                      value={field.value}
+                      disabled={!form.getValues().showCaptions}
+                    >
+                      <FormControl>
+                        <SelectTrigger className="w-full mt-1">
+                          <SelectValue placeholder="Select text position" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="overlay-bottom">Overlay (Bottom)</SelectItem>
+                        <SelectItem value="overlay-top">Overlay (Top)</SelectItem>
+                        <SelectItem value="below-image">Below Image</SelectItem>
+                        <SelectItem value="above-image">Above Image</SelectItem>
+                        <SelectItem value="left-of-image">Left of Image</SelectItem>
+                        <SelectItem value="right-of-image">Right of Image</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </FormItem>
+                )}
+              />
+              
+              {/* Text Alignment */}
+              <FormField
+                control={form.control}
+                name="textAlignment"
+                render={({ field }) => (
+                  <FormItem className="mb-4">
+                    <FormLabel className="font-medium text-gray-900">
+                      Text Alignment
+                    </FormLabel>
+                    <Select 
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                      value={field.value}
+                      disabled={!form.getValues().showCaptions}
+                    >
+                      <FormControl>
+                        <SelectTrigger className="w-full mt-1">
+                          <SelectValue placeholder="Select text alignment" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="left">Left</SelectItem>
+                        <SelectItem value="center">Center</SelectItem>
+                        <SelectItem value="right">Right</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </FormItem>
+                )}
+              />
+              
+              {/* Text Padding */}
+              <FormField
+                control={form.control}
+                name="textPadding"
+                render={({ field }) => (
+                  <FormItem className="mb-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <FormLabel className="font-medium text-gray-900">
+                        Text Padding
+                      </FormLabel>
+                      <span className="text-sm text-gray-500">{field.value}px</span>
+                    </div>
+                    <FormControl>
+                      <Slider
+                        value={[field.value]}
+                        max={50}
+                        min={0}
+                        step={1}
+                        onValueChange={(values) => field.onChange(values[0])}
+                        className="w-full"
+                        disabled={!form.getValues().showCaptions}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              
+              {/* Text Maximum Width */}
+              <FormField
+                control={form.control}
+                name="textMaxWidth"
+                render={({ field }) => (
+                  <FormItem className="mb-4">
+                    <FormLabel className="font-medium text-gray-900">
+                      Text Maximum Width
+                    </FormLabel>
+                    <Select 
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                      value={field.value}
+                      disabled={!form.getValues().showCaptions}
+                    >
+                      <FormControl>
+                        <SelectTrigger className="w-full mt-1">
+                          <SelectValue placeholder="Select text max width" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="full">Full Width</SelectItem>
+                        <SelectItem value="3/4">Three-Quarters Width</SelectItem>
+                        <SelectItem value="1/2">Half Width</SelectItem>
+                        <SelectItem value="1/3">One-Third Width</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </FormItem>
+                )}
+              />
+              
+              {/* Text Background */}
+              <FormField
+                control={form.control}
+                name="textBackground"
+                render={({ field }) => (
+                  <FormItem className="flex items-center justify-between mb-4">
+                    <div>
+                      <FormLabel className="font-medium text-gray-900">
+                        Text Background
+                      </FormLabel>
+                      <FormDescription>
+                        Show background behind text
+                      </FormDescription>
+                    </div>
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        disabled={!form.getValues().showCaptions}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              
+              {/* Text Background Color */}
+              <FormField
+                control={form.control}
+                name="textBackgroundColor"
+                render={({ field }) => (
+                  <FormItem className="mb-4">
+                    <FormLabel className="font-medium text-gray-900">
+                      Text Background Color
+                    </FormLabel>
+                    <div className="flex items-center gap-2 mt-1">
+                      <div 
+                        className="w-8 h-8 rounded-md border border-gray-300" 
+                        style={{ backgroundColor: field.value }}
+                      />
+                      <FormControl>
+                        <Input
+                          type="color"
+                          className="w-12 h-8 p-0 border-0"
+                          value={field.value}
+                          onChange={field.onChange}
+                          disabled={!form.getValues().showCaptions || !form.getValues().textBackground}
+                        />
+                      </FormControl>
+                      <Input
+                        className="flex-1"
+                        value={field.value}
+                        onChange={field.onChange}
+                        disabled={!form.getValues().showCaptions || !form.getValues().textBackground}
+                      />
+                    </div>
+                  </FormItem>
+                )}
+              />
+              
+              {/* Text Background Opacity */}
+              <FormField
+                control={form.control}
+                name="textBackgroundOpacity"
+                render={({ field }) => (
+                  <FormItem className="mb-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <FormLabel className="font-medium text-gray-900">
+                        Text Background Opacity
+                      </FormLabel>
+                      <span className="text-sm text-gray-500">{field.value}%</span>
+                    </div>
+                    <FormControl>
+                      <Slider
+                        value={[field.value]}
+                        max={100}
+                        min={0}
+                        step={1}
+                        onValueChange={(values) => field.onChange(values[0])}
+                        className="w-full"
+                        disabled={!form.getValues().showCaptions || !form.getValues().textBackground}
                       />
                     </FormControl>
                   </FormItem>
@@ -789,29 +1140,29 @@ export default function DisplaySettingsForm() {
                   </FormItem>
                 )}
               />
-              
-              {/* Preview */}
-              <div className="mt-4 p-4 rounded-md bg-gray-100">
-                <h4 className="text-sm font-medium text-gray-700 mb-2">Preview:</h4>
-                <div 
-                  className="p-4 bg-black rounded-md text-center"
-                  style={{ 
-                    borderStyle: form.getValues().borderStyle === "none" ? undefined : form.getValues().borderStyle,
-                    borderWidth: form.getValues().borderStyle === "none" ? 0 : `${form.getValues().borderWidth}px`,
-                    borderColor: form.getValues().borderColor
-                  }}
-                >
-                  <div 
-                    className="text-lg font-medium"
-                    style={{ 
-                      fontFamily: form.getValues().fontFamily,
-                      color: form.getValues().fontColor 
-                    }}
-                  >
-                    Sample Photo Caption
-                  </div>
-                </div>
-              </div>
+            </div>
+            
+            {/* Display Preview */}
+            <div className="mb-8">
+              <DisplayPreview settings={{
+                displayFormat: form.watch("displayFormat"),
+                borderStyle: form.watch("borderStyle"),
+                borderWidth: form.watch("borderWidth"), 
+                borderColor: form.watch("borderColor"),
+                fontFamily: form.watch("fontFamily"),
+                fontColor: form.watch("fontColor"),
+                fontSize: form.watch("fontSize"),
+                textPosition: form.watch("textPosition"),
+                textAlignment: form.watch("textAlignment"),
+                textPadding: form.watch("textPadding"),
+                textMaxWidth: form.watch("textMaxWidth"),
+                textBackground: form.watch("textBackground"),
+                textBackgroundColor: form.watch("textBackgroundColor"),
+                textBackgroundOpacity: form.watch("textBackgroundOpacity"),
+                backgroundPath: settings?.backgroundPath || null,
+                logoPath: settings?.logoPath || null,
+                showCaptions: form.watch("showCaptions")
+              }} />
             </div>
             
             {/* Save button */}
